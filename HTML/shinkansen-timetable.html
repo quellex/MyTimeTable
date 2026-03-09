@@ -205,11 +205,17 @@ header {
 <div class="train-list" id="train-list"></div>
 <button class="fab" onclick="scrollToNow()">⏱</button>
 
-<script src="./shinkansen-timetable-data.js"></script>
+<script src="./shinkansen-timetable-data.js?v=20260309"></script>
 <script>
 // ┌─────────────────────────────────────────────────────────────────────────┐
 // Timetable data is loaded from shinkansen-timetable-data.js
-const { DOWN_WEEKDAY, DOWN_WEEKEND, UP_WEEKDAY, UP_WEEKEND } = window.SHINKANSEN_TIMETABLE_DATA;
+const timetableData = window.SHINKANSEN_TIMETABLE_DATA;
+if (!timetableData) {
+  const list = document.getElementById('train-list');
+  list.innerHTML = '<div style="padding:14px;color:#c8312b;font-weight:700;">Data load error: shinkansen-timetable-data.js was not loaded.</div>';
+  throw new Error('SHINKANSEN_TIMETABLE_DATA is undefined');
+}
+const { DOWN_WEEKDAY, DOWN_WEEKEND, UP_WEEKDAY, UP_WEEKEND } = timetableData;
 // └─────────────────────────────────────────────────────────────────────────┘
 
 // ── State ────────────────────────────────────────────────
