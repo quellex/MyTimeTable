@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>東北新幹線 時刻表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d0d0d;
+  --paper: #f0ede6;
+  --rail: #1a2e4a;
+  --rail-mid: #243d61;
+  --accent: #c8312b;
+  --gold: #b8a060;
+  --muted: #8a8070;
+  --border: #d8d3c8;
+  --card: #ffffff;
+  --next-bg: #fff8e8;
+  --col-tokyo: #1a5c9a;
+  --col-ueno: #2e7d52;
+  --col-koriyama: #7b3f9a;
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --header-h: 108px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: var(--sans); background: var(--paper); color: var(--ink); min-height: 100dvh; }
+
+/* HEADER */
+header {
+  background: var(--rail);
+  color: #fff;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,.4);
+  height: var(--header-h);
+}
+.header-top { display:flex; align-items:center; padding:10px 14px 8px; gap:10px; }
+.train-icon {
+  width:30px; height:30px; background:var(--accent); border-radius:6px;
+  display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0;
+}
+.header-title h1 { font-size:14px; font-weight:700; letter-spacing:.08em; }
+.header-title .sub { font-size:9px; opacity:.6; letter-spacing:.14em; text-transform:uppercase; }
+.clock-block { margin-left:auto; text-align:right; }
+#live-clock { font-family:var(--mono); font-size:19px; line-height:1; }
+#live-date { font-size:9px; opacity:.6; letter-spacing:.06em; margin-top:1px; }
+.day-badge {
+  display:inline-block; font-size:9px; font-weight:700;
+  letter-spacing:.1em; padding:1px 6px; border-radius:3px; margin-top:3px;
+}
+.day-badge.weekday { background:rgba(200,49,43,.9); color:#fff; }
+.day-badge.weekend { background:var(--gold); color:var(--rail); }
+
+/* Direction bar */
+.dir-bar { display:flex; padding:0 14px 8px; gap:6px; }
+.dir-btn {
+  flex:1; padding:6px 0; font-size:11px; font-weight:600;
+  font-family:var(--sans); letter-spacing:.06em; border:none;
+  border-radius:6px; cursor:pointer;
+  background:rgba(255,255,255,.12); color:rgba(255,255,255,.55);
+  transition:background .18s,color .18s; user-select:none;
+}
+.dir-btn.active { background:var(--accent); color:#fff; }
+
+/* Column headers */
+.col-header {
+  display:grid; grid-template-columns:100px 1fr 1fr 1fr;
+  background:var(--rail-mid);
+  border-bottom:2px solid rgba(255,255,255,.08);
+  position:sticky; top:var(--header-h); z-index:90;
+}
+.col-label {
+  padding:7px 4px; font-size:10px; font-weight:700;
+  letter-spacing:.1em; color:rgba(255,255,255,.6); text-align:center;
+}
+.col-label:first-child { text-align:left; padding-left:14px; }
+.col-label.tokyo    { color:#7ab8f5; border-bottom:2px solid #7ab8f5; }
+.col-label.ueno     { color:#7ec89a; border-bottom:2px solid #7ec89a; }
+.col-label.koriyama { color:#c09ae0; border-bottom:2px solid #c09ae0; }
+.col-label .en { display:block; font-size:8px; opacity:.55; letter-spacing:.12em; }
+
+/* Train list */
+.train-list { padding-bottom:80px; }
+
+/* Hour separator */
+.hour-sep {
+  display:flex; align-items:center; gap:8px; padding:8px 14px 4px;
+  position:sticky; top:calc(var(--header-h) + 33px);
+  background:var(--paper); z-index:80;
+}
+.hour-sep-num { font-family:var(--mono); font-size:20px; color:var(--rail); min-width:28px; line-height:1; }
+.hour-sep-line { flex:1; height:1px; background:var(--border); }
+
+/* Train row */
+.train-row {
+  display:grid; grid-template-columns:100px 1fr 1fr 1fr;
+  align-items:stretch;
+  border-bottom:1px solid #e8e4db;
+  background:var(--card);
+  transition:background .15s;
+  min-height:54px;
+}
+.train-row:active { background:#f5f0e8; }
+.train-row.past { opacity:.35; }
+.train-row.next {
+  background:var(--next-bg);
+  border-left:3px solid var(--accent);
+}
+
+/* Left: badge info */
+.cell-info {
+  padding:8px 4px 8px 14px;
+  display:flex; flex-direction:column; justify-content:center; gap:3px;
+}
+.train-row.next .cell-info { padding-left:11px; }
+.train-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:10px; font-weight:700; padding:2px 6px;
+  border-radius:3px; letter-spacing:.06em; width:fit-content;
+}
+.badge-hayate   { background:#1a6b3a; color:#fff; }
+.badge-yamabiko { background:#0f4d8c; color:#fff; }
+.badge-nasu     { background:#7b3f9a; color:#fff; }
+.train-meta { display:flex; align-items:center; gap:4px; }
+.train-num { font-size:10px; color:var(--muted); font-family:var(--mono); }
+.next-label {
+  font-size:8px; background:var(--accent); color:#fff;
+  padding:1px 4px; border-radius:3px; font-weight:700; letter-spacing:.08em;
+}
+.origin-label {
+  font-size:8px; background:var(--col-koriyama); color:#fff;
+  padding:1px 4px; border-radius:3px; font-weight:700; letter-spacing:.08em;
+}
+
+/* Time cells */
+.cell-time {
+  padding:6px 4px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border-left:1px solid #ede9e0;
+  gap:2px;
+}
+.time-big { font-family:var(--mono); font-size:18px; line-height:1; }
+.time-big .hh { font-size:18px; color:inherit; }
+.time-tag {
+  font-size:8px; font-weight:700; letter-spacing:.1em;
+  padding:1px 5px; border-radius:2px; color:#fff;
+}
+.cell-time.tokyo    .time-big { color:var(--col-tokyo); }
+.cell-time.ueno     .time-big { color:var(--col-ueno); }
+.cell-time.koriyama .time-big { color:var(--col-koriyama); }
+.tag-dep-tokyo    { background:var(--col-tokyo); }
+.tag-dep-ueno     { background:var(--col-ueno); }
+.tag-dep-koriyama { background:var(--col-koriyama); }
+.tag-arr-tokyo    { background:#0d3d6b; }
+.tag-arr-koriyama { background:#4e2070; }
+
+/* FAB */
+.fab {
+  position:fixed; bottom:24px; right:20px; z-index:200;
+  width:50px; height:50px; background:var(--rail); color:#fff;
+  border:none; border-radius:50%; font-size:20px; cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .15s;
+}
+.fab:active { transform:scale(.9); }
+
+@supports (padding-bottom:env(safe-area-inset-bottom)) {
+  .train-list { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+  .fab { bottom:calc(24px + env(safe-area-inset-bottom)); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="train-icon">🚄</div>
+    <div class="header-title">
+      <h1>東北新幹線</h1>
+      <div class="sub">Tohoku Shinkansen · 郡山停車列車</div>
+    </div>
+    <div class="clock-block">
+      <div id="live-clock">--:--</div>
+      <div id="live-date">----.--.--</div>
+      <div id="day-badge" class="day-badge weekday">平日</div>
+    </div>
+  </div>
+  <div class="dir-bar">
+    <button class="dir-btn active" id="btn-down" onclick="setDir('down')">▼ 下り（東京→郡山）</button>
+    <button class="dir-btn" id="btn-up"           onclick="setDir('up')"  >▲ 上り（郡山→東京）</button>
+  </div>
+</header>
+
+<div class="col-header">
+  <div class="col-label">列車</div>
+  <div class="col-label" id="lbl-0"></div>
+  <div class="col-label" id="lbl-1"></div>
+  <div class="col-label" id="lbl-2"></div>
+</div>
+
+<div class="train-list" id="train-list"></div>
+<button class="fab" onclick="scrollToNow()">⏱</button>
+
+<script>
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  ★★★ 時刻表データ ここから ★★★                                          │
+// │  ダイヤ改正時はこのブロック内だけを編集してください                           │
+// │                                                                         │
+// │  各列車の形式:                                                             │
+// │    { id:'番号', type:'種別', name:'表示名', dest:'行先',                   │
+// │      times:['HH:MM','HH:MM','HH:MM'] }                                  │
+// │                                                                         │
+// │  下り times の順: [東京発, 上野発, 郡山着]                                  │
+// │  上り times の順: [郡山発, 上野発, 東京着]                                  │
+// │                                                                         │
+// │  type の値: 'yamabiko' / 'hayate' / 'nasu'                              │
+// │  上り列車で郡山始発の場合は origin:'koriyama' を末尾に追加                    │
+// └─────────────────────────────────────────────────────────────────────────┘
+
+const DOWN_WEEKDAY = [
+  { id:'221', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['06:04','06:11','07:39'] },
+  { id:'131', type:'hayate',   name:'はやて',   dest:'盛岡',  times:['06:32','06:39','07:52'] },
+  { id:'223', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['06:56','07:03','08:22'] },
+  { id:'51',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['07:00','07:07','08:36'] },
+  { id:'225', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['07:20','07:27','08:42'] },
+  { id:'53',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['07:44','07:51','09:18'] },
+  { id:'227', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['08:00','08:07','09:27'] },
+  { id:'55',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['08:44','08:51','10:18'] },
+  { id:'229', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['09:00','09:07','10:27'] },
+  { id:'57',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['09:44','09:51','11:18'] },
+  { id:'231', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['10:00','10:07','11:27'] },
+  { id:'233', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['10:44','10:51','12:11'] },
+  { id:'235', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['11:00','11:07','12:27'] },
+  { id:'237', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['11:44','11:51','13:11'] },
+  { id:'239', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['12:00','12:07','13:27'] },
+  { id:'241', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['12:44','12:51','14:11'] },
+  { id:'243', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['13:00','13:07','14:27'] },
+  { id:'245', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['13:44','13:51','15:11'] },
+  { id:'247', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['14:00','14:07','15:27'] },
+  { id:'249', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['14:44','14:51','16:11'] },
+  { id:'251', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['15:00','15:07','16:27'] },
+  { id:'59',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['15:40','15:47','17:13'] },
+  { id:'253', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['16:00','16:07','17:27'] },
+  { id:'61',  type:'nasu',     name:'なすの',   dest:'郡山',  times:['16:40','16:47','18:13'] },
+  { id:'255', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['17:00','17:07','18:27'] },
+  { id:'257', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['17:44','17:51','19:11'] },
+  { id:'259', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['18:00','18:07','19:27'] },
+  { id:'261', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['18:44','18:51','20:11'] },
+  { id:'263', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['19:00','19:07','20:27'] },
+  { id:'265', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['19:44','19:51','21:11'] },
+  { id:'267', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['20:00','20:07','21:27'] },
+  { id:'269', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['20:44','20:51','22:11'] },
+  { id:'271', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['21:00','21:07','22:27'] },
+  { id:'273', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['21:44','21:51','23:16'] },
+];
+
+const DOWN_WEEKEND = [
+  { id:'221', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['06:04','06:11','07:39'] },
+  { id:'131', type:'hayate',   name:'はやて',   dest:'盛岡',  times:['06:32','06:39','07:52'] },
+  { id:'223', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['06:56','07:03','08:22'] },
+  { id:'225', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['07:20','07:27','08:42'] },
+  { id:'227', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['08:00','08:07','09:27'] },
+  { id:'229', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['09:00','09:07','10:27'] },
+  { id:'231', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['10:00','10:07','11:27'] },
+  { id:'233', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['10:44','10:51','12:11'] },
+  { id:'235', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['11:00','11:07','12:27'] },
+  { id:'237', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['11:44','11:51','13:11'] },
+  { id:'239', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['12:00','12:07','13:27'] },
+  { id:'241', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['12:44','12:51','14:11'] },
+  { id:'243', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['13:00','13:07','14:27'] },
+  { id:'245', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['13:44','13:51','15:11'] },
+  { id:'247', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['14:00','14:07','15:27'] },
+  { id:'249', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['14:44','14:51','16:11'] },
+  { id:'251', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['15:00','15:07','16:27'] },
+  { id:'253', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['16:00','16:07','17:27'] },
+  { id:'255', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['17:00','17:07','18:27'] },
+  { id:'257', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['17:44','17:51','19:11'] },
+  { id:'259', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['18:00','18:07','19:27'] },
+  { id:'261', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['18:44','18:51','20:11'] },
+  { id:'263', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['19:00','19:07','20:27'] },
+  { id:'265', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['19:44','19:51','21:11'] },
+  { id:'267', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['20:00','20:07','21:27'] },
+  { id:'271', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['21:00','21:07','22:27'] },
+  { id:'273', type:'yamabiko', name:'やまびこ', dest:'仙台',  times:['21:44','21:51','23:16'] },
+];
+
+// 上り: times = [郡山発, 上野発, 東京着]
+// origin:'koriyama' = 郡山始発、省略 = 仙台/盛岡始発（郡山は途中停車）
+const UP_WEEKDAY = [
+  { id:'222', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['06:04','07:23','07:30'] },
+  { id:'132', type:'hayate',   name:'はやて',   dest:'東京',  times:['06:08','07:22','07:29'] },
+  { id:'224', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['06:45','08:03','08:10'] },
+  { id:'52',  type:'nasu',     name:'なすの',   dest:'東京',  times:['06:51','08:24','08:31'], origin:'koriyama' },
+  { id:'226', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['07:17','08:35','08:42'] },
+  { id:'228', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['07:38','09:00','09:07'] },
+  { id:'54',  type:'nasu',     name:'なすの',   dest:'東京',  times:['07:48','09:22','09:29'], origin:'koriyama' },
+  { id:'230', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['08:17','09:38','09:45'] },
+  { id:'56',  type:'nasu',     name:'なすの',   dest:'東京',  times:['08:48','10:22','10:29'], origin:'koriyama' },
+  { id:'232', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['09:17','10:38','10:45'] },
+  { id:'234', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['09:55','11:12','11:19'] },
+  { id:'236', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['10:17','11:38','11:45'] },
+  { id:'238', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['10:55','12:12','12:19'] },
+  { id:'240', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['11:17','12:38','12:45'] },
+  { id:'242', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['11:55','13:12','13:19'] },
+  { id:'244', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['12:17','13:38','13:45'] },
+  { id:'246', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['12:55','14:12','14:19'] },
+  { id:'248', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['13:17','14:38','14:45'] },
+  { id:'250', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['13:55','15:12','15:19'] },
+  { id:'252', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['14:17','15:38','15:45'] },
+  { id:'254', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['14:55','16:12','16:19'] },
+  { id:'256', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['15:17','16:38','16:45'] },
+  { id:'258', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['15:55','17:12','17:19'] },
+  { id:'260', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['16:17','17:38','17:45'] },
+  { id:'58',  type:'nasu',     name:'なすの',   dest:'東京',  times:['16:42','18:16','18:23'], origin:'koriyama' },
+  { id:'262', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['16:55','18:12','18:19'] },
+  { id:'264', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['17:17','18:38','18:45'] },
+  { id:'60',  type:'nasu',     name:'なすの',   dest:'東京',  times:['17:42','19:16','19:23'], origin:'koriyama' },
+  { id:'266', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['17:55','19:12','19:19'] },
+  { id:'268', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['18:17','19:38','19:45'] },
+  { id:'270', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['18:55','20:12','20:19'] },
+  { id:'272', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['19:17','20:38','20:45'] },
+  { id:'274', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['19:55','21:12','21:19'] },
+  { id:'276', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['20:17','21:38','21:45'] },
+  { id:'278', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['20:55','22:12','22:19'] },
+  { id:'280', type:'yamabiko', name:'やまびこ', dest:'東京',  times:['21:17','22:38','22:45'] },
+];
+const UP_WEEKEND = UP_WEEKDAY;
+
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  ★★★ 時刻表データ ここまで ★★★                                          │
+// └─────────────────────────────────────────────────────────────────────────┘
+
+// ── State ────────────────────────────────────────────────
+let dir = 'down';
+
+// ── Clock ────────────────────────────────────────────────
+const DAY_NAMES = ['日','月','火','水','木','金','土'];
+function isWeekend(d) { const w=d.getDay(); return w===0||w===6; }
+
+function updateClock() {
+  const now = new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('live-clock').textContent = `${h}:${m}:${s}`;
+  const y=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0'),
+        dd=String(now.getDate()).padStart(2,'0'), dn=DAY_NAMES[now.getDay()];
+  document.getElementById('live-date').textContent = `${y}.${mo}.${dd}（${dn}）`;
+  const b=document.getElementById('day-badge');
+  if (isWeekend(now)) { b.textContent='土日祝'; b.className='day-badge weekend'; }
+  else { b.textContent='平日'; b.className='day-badge weekday'; }
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Helpers ──────────────────────────────────────────────
+function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+
+// ── Render ────────────────────────────────────────────────
+function render() {
+  document.getElementById('btn-down').className = 'dir-btn'+(dir==='down'?' active':'');
+  document.getElementById('btn-up').className   = 'dir-btn'+(dir==='up'  ?' active':'');
+
+  // Column header labels
+  const lblDefs = dir === 'down'
+    ? [ {cls:'tokyo',    label:'東京', sub:'発'},
+        {cls:'ueno',     label:'上野', sub:'発'},
+        {cls:'koriyama', label:'郡山', sub:'着'} ]
+    : [ {cls:'koriyama', label:'郡山', sub:'発'},
+        {cls:'ueno',     label:'上野', sub:'発'},
+        {cls:'tokyo',    label:'東京', sub:'着'} ];
+
+  lblDefs.forEach((d, i) => {
+    const el = document.getElementById('lbl-'+i);
+    el.className = `col-label ${d.cls}`;
+    el.innerHTML = `${d.label}<span class="en">${d.sub}</span>`;
+  });
+
+  const weekend = isWeekend(new Date());
+  const nm = nowMins();
+  const trains = dir==='down'
+    ? (weekend ? DOWN_WEEKEND : DOWN_WEEKDAY)
+    : (weekend ? UP_WEEKEND   : UP_WEEKDAY);
+
+  // Next train = first where times[0] >= now
+  let nextId=null, minDiff=Infinity;
+  trains.forEach(t => {
+    const diff = toMins(t.times[0]) - nm;
+    if (diff>=0 && diff<minDiff) { minDiff=diff; nextId=t.id; }
+  });
+
+  // Group by departure hour (times[0])
+  const groups = {};
+  trains.forEach(t => {
+    const hour = t.times[0].split(':')[0];
+    if (!groups[hour]) groups[hour] = [];
+    groups[hour].push(t);
+  });
+
+  const list = document.getElementById('train-list');
+  let html = '';
+
+  Object.keys(groups).sort((a,b)=>+a-+b).forEach(hour => {
+    html += `<div class="hour-sep">
+      <span class="hour-sep-num">${hour}</span>
+      <div class="hour-sep-line"></div>
+    </div>`;
+
+    groups[hour].forEach(t => {
+      const isPast = toMins(t.times[0]) < nm;
+      const isNext = t.id === nextId;
+      let cls = 'train-row';
+      if (isPast) cls += ' past';
+      if (isNext) cls += ' next';
+
+      const [t0,t1,t2] = t.times;
+      const [hh0,mm0] = t0.split(':');
+      const [hh1,mm1] = t1.split(':');
+      const [hh2,mm2] = t2.split(':');
+
+      // Column color classes
+      const c0 = dir==='down' ? 'tokyo'    : 'koriyama';
+      const c2 = dir==='down' ? 'koriyama' : 'tokyo';
+
+      // Tag classes: col0,1 = departure, col2 = arrival
+      const tag0 = `tag-dep-${c0}`;
+      const tag1 = `tag-dep-ueno`;
+      const tag2 = dir==='down' ? 'tag-arr-koriyama' : 'tag-arr-tokyo';
+
+      html += `<div class="${cls}">
+        <div class="cell-info">
+          <span class="train-badge badge-${t.type}">${t.name}</span>
+          <div class="train-meta">
+            <span class="train-num">${t.id}号</span>
+            ${isNext ? '<span class="next-label">次発</span>' : ''}
+            ${dir==='up' && t.origin==='koriyama' ? '<span class="origin-label">郡山始発</span>' : ''}
+          </div>
+        </div>
+        <div class="cell-time ${c0}">
+          <div class="time-big"><span class="hh">${hh0}:</span>${mm0}</div>
+          <div class="time-tag ${tag0}">発</div>
+        </div>
+        <div class="cell-time ueno">
+          <div class="time-big"><span class="hh">${hh1}:</span>${mm1}</div>
+          <div class="time-tag ${tag1}">発</div>
+        </div>
+        <div class="cell-time ${c2}">
+          <div class="time-big"><span class="hh">${hh2}:</span>${mm2}</div>
+          <div class="time-tag ${tag2}">着</div>
+        </div>
+      </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+  scrollToNow();
+}
+
+function setDir(d) { dir=d; render(); }
+
+function scrollToNow() {
+  const el = document.querySelector('.train-row.next');
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+setInterval(render, 60000);
+render();
+</script>
+</body>
+</html>
