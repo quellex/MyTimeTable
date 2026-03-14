@@ -24,7 +24,7 @@
   --col-koriyama: #7b3f9a;
   --mono: 'Share Tech Mono', monospace;
   --sans: 'Noto Sans JP', sans-serif;
-  --header-h: 108px;
+  --header-h: 142px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: var(--sans); background: var(--paper); color: var(--ink); min-height: 100dvh; }
@@ -53,6 +53,29 @@ header {
 }
 .day-badge.weekday { background:rgba(200,49,43,.9); color:#fff; }
 .day-badge.weekend { background:var(--gold); color:var(--rail); }
+
+.day-toggle {
+  display:flex;
+  padding:0 14px 8px;
+  gap:6px;
+}
+.day-toggle-btn {
+  flex:1;
+  padding:5px 0;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:6px;
+  background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.6);
+  cursor:pointer;
+}
+.day-toggle-btn.active {
+  background:rgba(255,255,255,.94);
+  color:var(--rail);
+  border-color:rgba(255,255,255,.94);
+}
 
 /* Direction bar */
 .dir-bar { display:flex; padding:0 14px 8px; gap:6px; }
@@ -189,6 +212,10 @@ header {
       <div id="day-badge" class="day-badge weekday">平日</div>
     </div>
   </div>
+  <div class="day-toggle">
+    <button class="day-toggle-btn" id="btn-weekday" onclick="setServiceDay('weekday')">平日ダイヤ</button>
+    <button class="day-toggle-btn" id="btn-weekend" onclick="setServiceDay('weekend')">休日ダイヤ</button>
+  </div>
   <div class="dir-bar">
     <button class="dir-btn active" id="btn-down" onclick="setDir('down')">▼ 下り（東京→郡山）</button>
     <button class="dir-btn" id="btn-up"           onclick="setDir('up')"  >▲ 上り（郡山→東京）</button>
@@ -212,6 +239,7 @@ header {
 
   // ── State ──────────────────────────────────────────────
   let dir = 'down';
+  let serviceDay = loadInitialServiceDay();
 
   // ── Clock ──────────────────────────────────────────────
   const DAY_NAMES = ['日','月','火','水','木','金','土'];
@@ -226,16 +254,27 @@ header {
     const y=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0'),
           dd=String(now.getDate()).padStart(2,'0'), dn=DAY_NAMES[now.getDay()];
     document.getElementById('live-date').textContent = `${y}.${mo}.${dd}（${dn}）`;
-    const b=document.getElementById('day-badge');
-    if (isWeekend(now)) { b.textContent='土日祝'; b.className='day-badge weekend'; }
-    else { b.textContent='平日'; b.className='day-badge weekday'; }
   }
   setInterval(updateClock, 1000);
   updateClock();
+  updateServiceDayUI();
 
   // ── Helpers ────────────────────────────────────────────
   function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
   function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+  function loadInitialServiceDay() {
+    const saved = localStorage.getItem('shinkansen-service-day');
+    if (saved === 'weekday' || saved === 'weekend') return saved;
+    return isWeekend(new Date()) ? 'weekend' : 'weekday';
+  }
+  function isWeekendMode() { return serviceDay === 'weekend'; }
+  function updateServiceDayUI() {
+    const badge = document.getElementById('day-badge');
+    badge.textContent = isWeekendMode() ? '休日ダイヤ' : '平日ダイヤ';
+    badge.className = `day-badge ${isWeekendMode() ? 'weekend' : 'weekday'}`;
+    document.getElementById('btn-weekday').className = `day-toggle-btn${serviceDay==='weekday' ? ' active' : ''}`;
+    document.getElementById('btn-weekend').className = `day-toggle-btn${serviceDay==='weekend' ? ' active' : ''}`;
+  }
 
   // ── Render ─────────────────────────────────────────────
   function render() {
@@ -256,11 +295,10 @@ header {
       el.innerHTML = `${d.label}<span class="en">${d.sub}</span>`;
     });
 
-    const weekend = isWeekend(new Date());
     const nm = nowMins();
     const trains = dir==='down'
-      ? (weekend ? DOWN_WEEKEND : DOWN_WEEKDAY)
-      : (weekend ? UP_WEEKEND   : UP_WEEKDAY);
+      ? (isWeekendMode() ? DOWN_WEEKEND : DOWN_WEEKDAY)
+      : (isWeekendMode() ? UP_WEEKEND   : UP_WEEKDAY);
 
     let nextId=null, minDiff=Infinity;
     trains.forEach(t => {
@@ -333,6 +371,12 @@ header {
   }
 
   window.setDir = function setDir(d) { dir=d; render(); };
+  window.setServiceDay = function setServiceDay(nextServiceDay) {
+    serviceDay = nextServiceDay;
+    localStorage.setItem('shinkansen-service-day', serviceDay);
+    updateServiceDayUI();
+    render();
+  };
   window.scrollToNow = function scrollToNow() {
     const el = document.querySelector('.train-row.next');
     if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
