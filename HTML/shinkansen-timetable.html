@@ -205,155 +205,189 @@ header {
 <div class="train-list" id="train-list"></div>
 <button class="fab" onclick="scrollToNow()">⏱</button>
 
-<script src="./shinkansen-timetable-data.js?v=20260309"></script>
 <script>
-// ┌─────────────────────────────────────────────────────────────────────────┐
-// Timetable data is loaded from shinkansen-timetable-data.js
-const timetableData = window.SHINKANSEN_TIMETABLE_DATA;
-if (!timetableData) {
+(async function init() {
+  const timetableData = await loadTimetableData();
+  const { DOWN_WEEKDAY, DOWN_WEEKEND, UP_WEEKDAY, UP_WEEKEND } = timetableData;
+
+  // ── State ──────────────────────────────────────────────
+  let dir = 'down';
+
+  // ── Clock ──────────────────────────────────────────────
+  const DAY_NAMES = ['日','月','火','水','木','金','土'];
+  function isWeekend(d) { const w=d.getDay(); return w===0||w===6; }
+
+  function updateClock() {
+    const now = new Date();
+    const h=String(now.getHours()).padStart(2,'0');
+    const m=String(now.getMinutes()).padStart(2,'0');
+    const s=String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('live-clock').textContent = `${h}:${m}:${s}`;
+    const y=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0'),
+          dd=String(now.getDate()).padStart(2,'0'), dn=DAY_NAMES[now.getDay()];
+    document.getElementById('live-date').textContent = `${y}.${mo}.${dd}（${dn}）`;
+    const b=document.getElementById('day-badge');
+    if (isWeekend(now)) { b.textContent='土日祝'; b.className='day-badge weekend'; }
+    else { b.textContent='平日'; b.className='day-badge weekday'; }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── Helpers ────────────────────────────────────────────
+  function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+  function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+
+  // ── Render ─────────────────────────────────────────────
+  function render() {
+    document.getElementById('btn-down').className = 'dir-btn'+(dir==='down'?' active':'');
+    document.getElementById('btn-up').className   = 'dir-btn'+(dir==='up'  ?' active':'');
+
+    const lblDefs = dir === 'down'
+      ? [ {cls:'tokyo',    label:'東京', sub:'発'},
+          {cls:'ueno',     label:'上野', sub:'発'},
+          {cls:'koriyama', label:'郡山', sub:'着'} ]
+      : [ {cls:'koriyama', label:'郡山', sub:'発'},
+          {cls:'ueno',     label:'上野', sub:'発'},
+          {cls:'tokyo',    label:'東京', sub:'着'} ];
+
+    lblDefs.forEach((d, i) => {
+      const el = document.getElementById('lbl-'+i);
+      el.className = `col-label ${d.cls}`;
+      el.innerHTML = `${d.label}<span class="en">${d.sub}</span>`;
+    });
+
+    const weekend = isWeekend(new Date());
+    const nm = nowMins();
+    const trains = dir==='down'
+      ? (weekend ? DOWN_WEEKEND : DOWN_WEEKDAY)
+      : (weekend ? UP_WEEKEND   : UP_WEEKDAY);
+
+    let nextId=null, minDiff=Infinity;
+    trains.forEach(t => {
+      const diff = toMins(t.times[0]) - nm;
+      if (diff>=0 && diff<minDiff) { minDiff=diff; nextId=t.id; }
+    });
+
+    const groups = {};
+    trains.forEach(t => {
+      const hour = t.times[0].split(':')[0];
+      if (!groups[hour]) groups[hour] = [];
+      groups[hour].push(t);
+    });
+
+    const list = document.getElementById('train-list');
+    let html = '';
+
+    Object.keys(groups).sort((a,b)=>+a-+b).forEach(hour => {
+      html += `<div class="hour-sep">
+        <span class="hour-sep-num">${hour}</span>
+        <div class="hour-sep-line"></div>
+      </div>`;
+
+      groups[hour].forEach(t => {
+        const isPast = toMins(t.times[0]) < nm;
+        const isNext = t.id === nextId;
+        let cls = 'train-row';
+        if (isPast) cls += ' past';
+        if (isNext) cls += ' next';
+
+        const [t0,t1,t2] = t.times;
+        const [hh0,mm0] = t0.split(':');
+        const [hh1,mm1] = t1.split(':');
+        const [hh2,mm2] = t2.split(':');
+
+        const c0 = dir==='down' ? 'tokyo'    : 'koriyama';
+        const c2 = dir==='down' ? 'koriyama' : 'tokyo';
+
+        const tag0 = `tag-dep-${c0}`;
+        const tag1 = `tag-dep-ueno`;
+        const tag2 = dir==='down' ? 'tag-arr-koriyama' : 'tag-arr-tokyo';
+
+        html += `<div class="${cls}">
+          <div class="cell-info">
+            <span class="train-badge badge-${t.type}">${t.name}</span>
+            <div class="train-meta">
+              <span class="train-num">${t.id}号</span>
+              ${isNext ? '<span class="next-label">次発</span>' : ''}
+              ${dir==='up' && t.origin==='koriyama' ? '<span class="origin-label">郡山始発</span>' : ''}
+            </div>
+          </div>
+          <div class="cell-time ${c0}">
+            <div class="time-big"><span class="hh">${hh0}:</span>${mm0}</div>
+            <div class="time-tag ${tag0}">発</div>
+          </div>
+          <div class="cell-time ueno">
+            <div class="time-big"><span class="hh">${hh1}:</span>${mm1}</div>
+            <div class="time-tag ${tag1}">発</div>
+          </div>
+          <div class="cell-time ${c2}">
+            <div class="time-big"><span class="hh">${hh2}:</span>${mm2}</div>
+            <div class="time-tag ${tag2}">着</div>
+          </div>
+        </div>`;
+      });
+    });
+
+    list.innerHTML = html;
+    scrollToNow();
+  }
+
+  window.setDir = function setDir(d) { dir=d; render(); };
+  window.scrollToNow = function scrollToNow() {
+    const el = document.querySelector('.train-row.next');
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+  };
+
+  setInterval(render, 60000);
+  render();
+})().catch(showDataLoadError);
+
+function loadTimetableData() {
+  if (window.SHINKANSEN_TIMETABLE_DATA) {
+    return Promise.resolve(window.SHINKANSEN_TIMETABLE_DATA);
+  }
+
+  const version = '20260314';
+  const candidates = buildDataScriptCandidates(version);
+
+  return candidates.reduce((promise, src) => {
+    return promise.catch(() => loadScript(src));
+  }, Promise.reject(new Error('Initial load attempt')));
+}
+
+function buildDataScriptCandidates(version) {
+  const currentPath = window.location.pathname || '';
+  const normalizedPath = currentPath.replace(/\/+/g, '/');
+  const candidates = [
+    `./shinkansen-timetable-data.js?v=${version}`,
+    `HTML/shinkansen-timetable-data.js?v=${version}`
+  ];
+
+  if (normalizedPath.includes('/HTML/')) {
+    candidates.unshift(`../HTML/shinkansen-timetable-data.js?v=${version}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      if (window.SHINKANSEN_TIMETABLE_DATA) resolve(window.SHINKANSEN_TIMETABLE_DATA);
+      else reject(new Error(`Loaded ${src} but timetable data was undefined`));
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function showDataLoadError(error) {
   const list = document.getElementById('train-list');
   list.innerHTML = '<div style="padding:14px;color:#c8312b;font-weight:700;">Data load error: shinkansen-timetable-data.js was not loaded.</div>';
-  throw new Error('SHINKANSEN_TIMETABLE_DATA is undefined');
+  console.error(error);
 }
-const { DOWN_WEEKDAY, DOWN_WEEKEND, UP_WEEKDAY, UP_WEEKEND } = timetableData;
-// └─────────────────────────────────────────────────────────────────────────┘
-
-// ── State ────────────────────────────────────────────────
-let dir = 'down';
-
-// ── Clock ────────────────────────────────────────────────
-const DAY_NAMES = ['日','月','火','水','木','金','土'];
-function isWeekend(d) { const w=d.getDay(); return w===0||w===6; }
-
-function updateClock() {
-  const now = new Date();
-  const h=String(now.getHours()).padStart(2,'0');
-  const m=String(now.getMinutes()).padStart(2,'0');
-  const s=String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('live-clock').textContent = `${h}:${m}:${s}`;
-  const y=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0'),
-        dd=String(now.getDate()).padStart(2,'0'), dn=DAY_NAMES[now.getDay()];
-  document.getElementById('live-date').textContent = `${y}.${mo}.${dd}（${dn}）`;
-  const b=document.getElementById('day-badge');
-  if (isWeekend(now)) { b.textContent='土日祝'; b.className='day-badge weekend'; }
-  else { b.textContent='平日'; b.className='day-badge weekday'; }
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ── Helpers ──────────────────────────────────────────────
-function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
-function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
-
-// ── Render ────────────────────────────────────────────────
-function render() {
-  document.getElementById('btn-down').className = 'dir-btn'+(dir==='down'?' active':'');
-  document.getElementById('btn-up').className   = 'dir-btn'+(dir==='up'  ?' active':'');
-
-  // Column header labels
-  const lblDefs = dir === 'down'
-    ? [ {cls:'tokyo',    label:'東京', sub:'発'},
-        {cls:'ueno',     label:'上野', sub:'発'},
-        {cls:'koriyama', label:'郡山', sub:'着'} ]
-    : [ {cls:'koriyama', label:'郡山', sub:'発'},
-        {cls:'ueno',     label:'上野', sub:'発'},
-        {cls:'tokyo',    label:'東京', sub:'着'} ];
-
-  lblDefs.forEach((d, i) => {
-    const el = document.getElementById('lbl-'+i);
-    el.className = `col-label ${d.cls}`;
-    el.innerHTML = `${d.label}<span class="en">${d.sub}</span>`;
-  });
-
-  const weekend = isWeekend(new Date());
-  const nm = nowMins();
-  const trains = dir==='down'
-    ? (weekend ? DOWN_WEEKEND : DOWN_WEEKDAY)
-    : (weekend ? UP_WEEKEND   : UP_WEEKDAY);
-
-  // Next train = first where times[0] >= now
-  let nextId=null, minDiff=Infinity;
-  trains.forEach(t => {
-    const diff = toMins(t.times[0]) - nm;
-    if (diff>=0 && diff<minDiff) { minDiff=diff; nextId=t.id; }
-  });
-
-  // Group by departure hour (times[0])
-  const groups = {};
-  trains.forEach(t => {
-    const hour = t.times[0].split(':')[0];
-    if (!groups[hour]) groups[hour] = [];
-    groups[hour].push(t);
-  });
-
-  const list = document.getElementById('train-list');
-  let html = '';
-
-  Object.keys(groups).sort((a,b)=>+a-+b).forEach(hour => {
-    html += `<div class="hour-sep">
-      <span class="hour-sep-num">${hour}</span>
-      <div class="hour-sep-line"></div>
-    </div>`;
-
-    groups[hour].forEach(t => {
-      const isPast = toMins(t.times[0]) < nm;
-      const isNext = t.id === nextId;
-      let cls = 'train-row';
-      if (isPast) cls += ' past';
-      if (isNext) cls += ' next';
-
-      const [t0,t1,t2] = t.times;
-      const [hh0,mm0] = t0.split(':');
-      const [hh1,mm1] = t1.split(':');
-      const [hh2,mm2] = t2.split(':');
-
-      // Column color classes
-      const c0 = dir==='down' ? 'tokyo'    : 'koriyama';
-      const c2 = dir==='down' ? 'koriyama' : 'tokyo';
-
-      // Tag classes: col0,1 = departure, col2 = arrival
-      const tag0 = `tag-dep-${c0}`;
-      const tag1 = `tag-dep-ueno`;
-      const tag2 = dir==='down' ? 'tag-arr-koriyama' : 'tag-arr-tokyo';
-
-      html += `<div class="${cls}">
-        <div class="cell-info">
-          <span class="train-badge badge-${t.type}">${t.name}</span>
-          <div class="train-meta">
-            <span class="train-num">${t.id}号</span>
-            ${isNext ? '<span class="next-label">次発</span>' : ''}
-            ${dir==='up' && t.origin==='koriyama' ? '<span class="origin-label">郡山始発</span>' : ''}
-          </div>
-        </div>
-        <div class="cell-time ${c0}">
-          <div class="time-big"><span class="hh">${hh0}:</span>${mm0}</div>
-          <div class="time-tag ${tag0}">発</div>
-        </div>
-        <div class="cell-time ueno">
-          <div class="time-big"><span class="hh">${hh1}:</span>${mm1}</div>
-          <div class="time-tag ${tag1}">発</div>
-        </div>
-        <div class="cell-time ${c2}">
-          <div class="time-big"><span class="hh">${hh2}:</span>${mm2}</div>
-          <div class="time-tag ${tag2}">着</div>
-        </div>
-      </div>`;
-    });
-  });
-
-  list.innerHTML = html;
-  scrollToNow();
-}
-
-function setDir(d) { dir=d; render(); }
-
-function scrollToNow() {
-  const el = document.querySelector('.train-row.next');
-  if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
-}
-
-setInterval(render, 60000);
-render();
 </script>
 </body>
 </html>
