@@ -18,10 +18,10 @@ from bs4 import BeautifulSoup
 
 
 DEFAULT_URLS = {
-    "down_weekday": "https://timetables.jreast.co.jp/2603/timetable-v/003d1.html",
-    "down_weekend": "https://timetables.jreast.co.jp/2603/timetable-v/003d2.html",
-    "up_weekday": "https://timetables.jreast.co.jp/2603/timetable-v/003u1.html",
-    "up_weekend": "https://timetables.jreast.co.jp/2603/timetable-v/003u2.html",
+    "down_weekday": "https://timetables.jreast.co.jp/2604/timetable-v/003d1.html",
+    "down_weekend": "https://timetables.jreast.co.jp/2604/timetable-v/003d2.html",
+    "up_weekday": "https://timetables.jreast.co.jp/2604/timetable-v/003u1.html",
+    "up_weekend": "https://timetables.jreast.co.jp/2604/timetable-v/003u2.html",
 }
 
 TYPE_MAP = {
