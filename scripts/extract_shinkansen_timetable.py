@@ -120,10 +120,16 @@ def extract_trains(url: str, direction: str) -> list[Train]:
             continue
 
         raw_times = [row[index] if index < len(row) else "" for row in station_rows]
-        normalized_times = [normalize_time(value) for value in raw_times]
-        if any(time is None for time in normalized_times):
+        departure_1, departure_2, departure_3 = (
+            normalize_time(value) for value in raw_times
+        )
+        if (
+            departure_1 is None
+            or departure_2 is None
+            or departure_3 is None
+        ):
             continue
-        times = tuple(time for time in normalized_times if time is not None)
+        times: tuple[str, str, str] = (departure_1, departure_2, departure_3)
         dedupe_key = (train_id, train_type, times)
         if dedupe_key in seen:
             continue
