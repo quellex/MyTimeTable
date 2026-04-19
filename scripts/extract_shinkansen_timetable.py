@@ -24,15 +24,42 @@ DEFAULT_URLS = {
     "up_weekend": "https://timetables.jreast.co.jp/2604/timetable-v/003u2.html",
 }
 
+NAVITIME_URLS = {
+    "down_weekday": (
+        "https://www.navitime.co.jp/diagram/depArrTimeList"
+        "?line=00000185&departure=00006668&arrival=00002012&updown=1"
+    ),
+    "down_weekend": (
+        "https://www.navitime.co.jp/diagram/depArrTimeList"
+        "?date=2026-04-18&hour=4&departure=00006668&arrival=00002012"
+        "&line=00000185&updown=1"
+    ),
+    "up_weekday": (
+        "https://www.navitime.co.jp/diagram/depArrTimeList"
+        "?line=00000185&departure=00002012&arrival=00006668&updown=0"
+    ),
+    "up_weekend": (
+        "https://www.navitime.co.jp/diagram/depArrTimeList"
+        "?date=2026-04-18&hour=4&departure=00002012&arrival=00006668"
+        "&line=00000185&updown=0"
+    ),
+}
+
 TYPE_MAP = {
     "やまびこ": "yamabiko",
     "はやて": "hayate",
     "なすの": "nasu",
 }
 
+NAVITIME_TYPE_MAP = {
+    **TYPE_MAP,
+    "つばさ": "tsubasa",
+}
+
 DOWN_ROWS = ("東京 発", "上野 発", "郡山 発")
 UP_ROWS = ("郡山 発", "上野 着", "東京 着")
 TIME_PATTERN = re.compile(r"^\d{4}$")
+NAVITIME_CLOCK_PATTERN = re.compile(r"^\d{2}:\d{2}$")
 
 
 @dataclass(frozen=True)
@@ -73,11 +100,11 @@ def build_row_map(rows: Iterable[list[str]]) -> dict[str, list[str]]:
     return row_map
 
 
-def normalize_train_name(raw: str) -> tuple[str, str]:
+def normalize_train_name(raw: str, type_map: dict[str, str] = TYPE_MAP) -> tuple[str, str]:
     cleaned = " ".join(raw.split())
-    for jp_name, train_type in TYPE_MAP.items():
+    for jp_name, train_type in type_map.items():
         if cleaned.startswith(jp_name):
-            train_id = cleaned.removeprefix(jp_name).strip()
+            train_id = cleaned.removeprefix(jp_name).strip().removesuffix("号")
             return train_id, train_type
     raise ValueError(f"Unsupported train type in row: {raw}")
 
@@ -87,6 +114,56 @@ def normalize_time(raw: str) -> str | None:
     if not TIME_PATTERN.fullmatch(value):
         return None
     return f"{value[:2]}:{value[2:]}"
+
+
+def fetch_text_lines(url: str) -> list[str]:
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    response.encoding = "utf-8"
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    return [text.strip() for text in soup.stripped_strings if text.strip()]
+
+
+def parse_navitime_arrivals(url: str) -> dict[tuple[str, str, str], str]:
+    lines = fetch_text_lines(url)
+    arrivals: dict[tuple[str, str, str], str] = {}
+
+    for index, line in enumerate(lines):
+        if (
+            not NAVITIME_CLOCK_PATTERN.fullmatch(line)
+            or index + 4 >= len(lines)
+            or lines[index + 1] != "発"
+            or not NAVITIME_CLOCK_PATTERN.fullmatch(lines[index + 2])
+            or lines[index + 3] != "着"
+        ):
+            continue
+
+        departure_time = line
+        arrival_time = lines[index + 2]
+        train_name: tuple[str, str] | None = None
+        for candidate in lines[index + 4 : index + 8]:
+            try:
+                train_name = normalize_train_name(candidate, type_map=NAVITIME_TYPE_MAP)
+                break
+            except ValueError:
+                continue
+
+        if train_name is None:
+            continue
+        train_id, train_type = train_name
+
+        key = (train_type, train_id, departure_time)
+        if key in arrivals and arrivals[key] != arrival_time:
+            print(
+                "NAVITIME duplicate mismatch for "
+                f"{train_type} {train_id} departing {departure_time}: "
+                f"{arrivals[key]} vs {arrival_time}"
+            )
+            continue
+        arrivals[key] = arrival_time
+
+    return arrivals
 
 
 def infer_destination(train_type: str, direction: str) -> str:
@@ -105,15 +182,129 @@ def infer_origin(train_type: str, direction: str) -> str | None:
     return None
 
 
-def extract_trains(url: str, direction: str) -> list[Train]:
+def is_all_day_service(service_note: str) -> bool:
+    return service_note.strip() == "全日"
+
+
+def apply_arrival_corrections(
+    trains: list[Train],
+    navitime_arrivals: dict[tuple[str, str, str], str],
+    direction: str,
+    schedule_label: str,
+) -> list[Train]:
+    corrected_trains: list[Train] = []
+    matched_keys: set[tuple[str, str, str]] = set()
+    destination_label = "Koriyama" if direction == "down" else "Tokyo"
+    context = f"[{schedule_label}] "
+
+    for train in trains:
+        key = (train.type, train.id, train.times[0])
+        corrected_arrival = navitime_arrivals.get(key)
+        if corrected_arrival is None:
+            fallback_matches = {
+                nav_key: arrival_time
+                for nav_key, arrival_time in navitime_arrivals.items()
+                if nav_key[1] == train.id and nav_key[2] == train.times[0]
+            }
+            unique_arrivals = sorted(set(fallback_matches.values()))
+            if len(unique_arrivals) == 1:
+                fallback_key = sorted(fallback_matches)[0]
+                corrected_arrival = unique_arrivals[0]
+                matched_keys.add(fallback_key)
+                print(
+                    context
+                    + "Using NAVITIME fallback by id and departure for "
+                    f"{train.type} {train.id} departing {train.times[0]} "
+                    f"via {fallback_key[0]}"
+                )
+            else:
+                type_matches = sorted(
+                    departure_time
+                    for nav_type, nav_id, departure_time in navitime_arrivals
+                    if nav_type == train.type and nav_id == train.id
+                )
+                print(
+                    context
+                    + "NAVITIME correction missing for "
+                    f"{train.type} {train.id} departing {train.times[0]}"
+                )
+                if type_matches:
+                    print(
+                        context
+                        + "NAVITIME departure mismatch for "
+                        f"{train.type} {train.id}: available departures {', '.join(type_matches)}"
+                    )
+                elif fallback_matches:
+                    fallback_types = ", ".join(
+                        sorted(
+                            f"{nav_type}@{departure_time}"
+                            for nav_type, _, departure_time in fallback_matches
+                        )
+                    )
+                    print(
+                        context
+                        + "NAVITIME type mismatch candidates for "
+                        f"{train.id} departing {train.times[0]}: {fallback_types}"
+                    )
+                corrected_trains.append(train)
+                continue
+
+        matched_keys.add(key)
+        if corrected_arrival != train.times[2]:
+            print(
+                context
+                + f"Corrected {destination_label} arrival for "
+                f"{train.type} {train.id} departing {train.times[0]}: "
+                f"{train.times[2]} -> {corrected_arrival}"
+            )
+
+        corrected_trains.append(
+            Train(
+                id=train.id,
+                type=train.type,
+                name=train.name,
+                dest=train.dest,
+                times=(train.times[0], train.times[1], corrected_arrival),
+                origin=train.origin,
+            )
+        )
+
+    extra_keys = sorted(set(navitime_arrivals) - matched_keys)
+    for train_type, train_id, departure_time in extra_keys:
+        if any(
+            matched_id == train_id and matched_departure == departure_time
+            for _, matched_id, matched_departure in matched_keys
+        ):
+            continue
+        print(
+            context
+            + "NAVITIME train not found in JR extraction: "
+            f"{train_type} {train_id} departing {departure_time}"
+        )
+
+    return corrected_trains
+
+
+def extract_trains(
+    url: str,
+    direction: str,
+    schedule_label: str,
+    navitime_arrivals: dict[tuple[str, str, str], str] | None = None,
+) -> list[Train]:
     row_map = build_row_map(fetch_table(url))
 
     train_names = row_map["列車名"]
+    service_days = row_map.get("運転日")
     stations = DOWN_ROWS if direction == "down" else UP_ROWS
     station_rows = [row_map[name] for name in stations]
     trains: list[Train] = []
     seen: set[tuple[str, str, tuple[str, str, str]]] = set()
     for index, raw_name in enumerate(train_names):
+        if service_days is not None:
+            service_note = service_days[index] if index < len(service_days) else ""
+            if not is_all_day_service(service_note):
+                continue
+
         try:
             train_id, train_type = normalize_train_name(raw_name)
         except ValueError:
@@ -144,6 +335,11 @@ def extract_trains(url: str, direction: str) -> list[Train]:
                 times=times,
                 origin=infer_origin(train_type, direction),
             )
+        )
+
+    if navitime_arrivals is not None:
+        return apply_arrival_corrections(
+            trains, navitime_arrivals, direction, schedule_label
         )
 
     return trains
@@ -229,11 +425,34 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    navitime_arrivals = {
+        key: parse_navitime_arrivals(url) for key, url in NAVITIME_URLS.items()
+    }
     data = {
-        "down_weekday": extract_trains(args.down_weekday_url, "down"),
-        "down_weekend": extract_trains(args.down_weekend_url, "down"),
-        "up_weekday": extract_trains(args.up_weekday_url, "up"),
-        "up_weekend": extract_trains(args.up_weekend_url, "up"),
+        "down_weekday": extract_trains(
+            args.down_weekday_url,
+            "down",
+            "weekday/down",
+            navitime_arrivals=navitime_arrivals["down_weekday"],
+        ),
+        "down_weekend": extract_trains(
+            args.down_weekend_url,
+            "down",
+            "weekend/down",
+            navitime_arrivals=navitime_arrivals["down_weekend"],
+        ),
+        "up_weekday": extract_trains(
+            args.up_weekday_url,
+            "up",
+            "weekday/up",
+            navitime_arrivals=navitime_arrivals["up_weekday"],
+        ),
+        "up_weekend": extract_trains(
+            args.up_weekend_url,
+            "up",
+            "weekend/up",
+            navitime_arrivals=navitime_arrivals["up_weekend"],
+        ),
     }
     js = render_js(data)
 
