@@ -2,184 +2,525 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>バス時刻表</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>郡山駅 バス時刻表</title>
 <style>
 :root {
   --ink: #16202b;
-  --paper: #f6f3ec;
-  --panel: #fffdf8;
-  --line: #d7cfbe;
-  --brand: #c05a2b;
-  --brand-deep: #7f3415;
-  --accent: #2a6f97;
+  --paper: #f4efe6;
+  --panel: #fffdfa;
+  --line: #ddd4c2;
+  --brand: #bf5a2d;
+  --brand-deep: #803716;
+  --accent: #2f7b83;
+  --accent-soft: #d9eeef;
+  --muted: #786d60;
+  --header-h: 190px;
 }
 
-* { box-sizing: border-box; }
-
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body {
-  margin: 0;
-  min-height: 100vh;
   font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+  min-height: 100dvh;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(192, 90, 43, 0.18), transparent 28%),
-    linear-gradient(180deg, #efe5d4 0%, var(--paper) 42%, #f9f7f1 100%);
+    radial-gradient(circle at top left, rgba(191, 90, 45, 0.18), transparent 26%),
+    linear-gradient(180deg, #efe2cf 0%, var(--paper) 42%, #fbf8f2 100%);
 }
 
-main {
-  width: min(920px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 32px 0 48px;
+header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 14px 14px 10px;
+  background: rgba(22, 32, 43, 0.96);
+  color: #fff;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.25);
+  min-height: var(--header-h);
 }
 
-.hero {
-  background: var(--panel);
-  border: 1px solid rgba(127, 52, 21, 0.15);
-  border-radius: 24px;
-  padding: 28px 22px;
-  box-shadow: 0 18px 40px rgba(22, 32, 43, 0.08);
-}
-
-.eyebrow {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--brand-deep);
-  background: rgba(192, 90, 43, 0.12);
-}
-
-h1 {
-  margin: 14px 0 10px;
-  font-size: clamp(32px, 7vw, 56px);
-  line-height: 1;
-  letter-spacing: 0.02em;
-}
-
-.lead {
-  margin: 0;
-  max-width: 34rem;
-  font-size: 16px;
-  line-height: 1.7;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-top: 24px;
-}
-
-.card {
-  padding: 18px;
-  border-radius: 18px;
-  background: #fff;
-  border: 1px solid var(--line);
-}
-
-.card h2 {
-  margin: 0 0 8px;
-  font-size: 18px;
-}
-
-.card p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.actions {
+.header-top {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
-  margin-top: 24px;
 }
 
-.btn {
-  display: inline-flex;
+.bus-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: 999px;
-  text-decoration: none;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.header-title h1 {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
+.header-title p {
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.clock {
+  margin-left: auto;
+  text-align: right;
+}
+
+#live-clock {
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
-.btn-primary {
-  color: #fff;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+#live-date {
+  margin-top: 3px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.btn-secondary {
-  color: var(--accent);
-  background: rgba(42, 111, 151, 0.1);
+.control-group {
+  margin-top: 12px;
 }
 
-.status {
-  margin-top: 24px;
+.control-title {
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.toggle-row {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle-btn {
+  flex: 1;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background: #fff;
+  color: var(--ink);
+  border-color: #fff;
+}
+
+main {
+  width: min(980px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 18px 0 80px;
+}
+
+.route-summary {
   padding: 16px 18px;
-  border-left: 4px solid var(--brand);
-  background: rgba(255, 255, 255, 0.72);
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(128, 55, 22, 0.14);
+  box-shadow: 0 14px 32px rgba(22, 32, 43, 0.08);
+}
+
+.route-summary strong {
+  display: block;
+  font-size: 18px;
+}
+
+.route-summary p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.7;
 }
 
-@media (max-width: 640px) {
-  .hero {
-    padding: 22px 18px;
-    border-radius: 18px;
+.hour-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 0 4px;
+}
+
+.hour-sep-num {
+  min-width: 42px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.hour-sep-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(128, 55, 22, 0.35), rgba(128, 55, 22, 0.04));
+}
+
+.trip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(92px, 0.8fr) minmax(92px, 0.8fr);
+  gap: 0;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 28px rgba(22, 32, 43, 0.06);
+}
+
+.trip-row.next {
+  border-color: rgba(191, 90, 45, 0.65);
+  box-shadow: 0 12px 28px rgba(191, 90, 45, 0.15);
+}
+
+.trip-row.past {
+  opacity: 0.46;
+}
+
+.trip-main {
+  padding: 14px 14px 15px;
+}
+
+.route-no {
+  display: inline-block;
+  margin-bottom: 7px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(47, 123, 131, 0.12);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trip-destination {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.trip-meta {
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.next-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+  color: #fff;
+  font-weight: 700;
+}
+
+.time-cell {
+  padding: 14px 8px;
+  border-left: 1px solid #ece4d7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.time-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.time-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.time-cell.arrival {
+  background: linear-gradient(180deg, rgba(47, 123, 131, 0.08), rgba(47, 123, 131, 0.02));
+}
+
+.empty,
+.error-box {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(191, 90, 45, 0.18);
+  line-height: 1.7;
+}
+
+.fab {
+  position: fixed;
+  right: 18px;
+  bottom: 20px;
+  z-index: 40;
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(128, 55, 22, 0.28);
+}
+
+@media (max-width: 760px) {
+  :root { --header-h: 224px; }
+  .trip-row {
+    grid-template-columns: 1fr;
+  }
+  .time-cell {
+    border-left: none;
+    border-top: 1px solid #ece4d7;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 12px 14px;
+  }
+  .time-cell.arrival {
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
   }
 }
 </style>
 </head>
 <body>
+<header>
+  <div class="header-top">
+    <div class="bus-icon">🚌</div>
+    <div class="header-title">
+      <h1>郡山駅 バス時刻表</h1>
+      <p>到着時刻ベースで比較できる一覧</p>
+    </div>
+    <div class="clock">
+      <div id="live-clock">--:--</div>
+      <div id="live-date">----.--.--</div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-title">区間</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="route-taishin" onclick="setRoute('taishin')">郡山駅前 ⇄ 台新</button>
+      <button class="toggle-btn" id="route-haribu" onclick="setRoute('haribu')">郡山駅前 ⇄ 針生</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-title">ダイヤ</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="day-weekday" onclick="setServiceDay('weekday')">平日</button>
+      <button class="toggle-btn" id="day-weekend" onclick="setServiceDay('weekend')">休日</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-title">方向</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="dir-down" onclick="setDir('down')">郡山駅前 → バス停</button>
+      <button class="toggle-btn" id="dir-up" onclick="setDir('up')">バス停 → 郡山駅前</button>
+    </div>
+  </div>
+</header>
+
 <main>
-  <section class="hero">
-    <span class="eyebrow">MyTimeTable Bus</span>
-    <h1>バス時刻表</h1>
-    <p class="lead">
-      GitHub Pages 上で公開するバス時刻表ページの入口です。ここをベースに、
-      路線ごとの時刻表やデータ連携をこれから追加していきます。
-    </p>
-
-    <div class="grid">
-      <article class="card">
-        <h2>公開URL</h2>
-        <p>
-          このページは `apps/bus/index.html` にあるので、GitHub Pages では
-          `/apps/bus/` のURLで直接開けます。
-        </p>
-      </article>
-      <article class="card">
-        <h2>次の実装先</h2>
-        <p>
-          バス用データは `data/bus/`、抽出スクリプトは `scripts/bus/` に揃える前提です。
-        </p>
-      </article>
-      <article class="card">
-        <h2>既存ページ</h2>
-        <p>
-          新幹線ページは引き続き `apps/shinkansen/` にあり、別パスURLで共存できます。
-        </p>
-      </article>
-    </div>
-
-    <div class="actions">
-      <a class="btn btn-primary" href="./">バスURLを確認</a>
-      <a class="btn btn-secondary" href="../shinkansen/">新幹線ページへ</a>
-    </div>
-
-    <div class="status">
-      現在は公開用プレースホルダの状態です。次にバス会社・路線・停留所の単位を決めて、
-      実データを載せる画面へ広げていけます。
-    </div>
+  <section class="route-summary">
+    <strong id="route-summary-title">郡山駅前 → 台新</strong>
+    <p id="route-summary-copy">到着時刻が早い順に並べています。行き先・出発時刻・到着時刻だけを見やすくまとめています。</p>
   </section>
+  <div id="trip-list"></div>
 </main>
+
+<button class="fab" onclick="scrollToNext()" title="次の便へ">⏱</button>
+
+<script>
+(async function init() {
+  const data = await loadBusData();
+  const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+  let routeKey = 'taishin';
+  let serviceDay = loadInitialServiceDay();
+  let dir = 'down';
+
+  function loadInitialServiceDay() {
+    const saved = localStorage.getItem('bus-service-day');
+    if (saved === 'weekday' || saved === 'weekend') return saved;
+    const today = new Date().getDay();
+    return today === 0 || today === 6 ? 'weekend' : 'weekday';
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    document.getElementById('live-clock').textContent = `${hh}:${mm}`;
+    document.getElementById('live-date').textContent = `${now.getFullYear()}.${mo}.${dd}（${DAY_NAMES[now.getDay()]}）`;
+  }
+
+  function toMinutes(value) {
+    const [hh, mm] = value.split(':').map(Number);
+    return hh * 60 + mm;
+  }
+
+  function getTrips() {
+    return data.routes[routeKey][serviceDay][dir];
+  }
+
+  function getTargetStopLabel() {
+    return data.routes[routeKey].stops[dir][1];
+  }
+
+  function updateControls() {
+    document.getElementById('route-taishin').className = `toggle-btn${routeKey === 'taishin' ? ' active' : ''}`;
+    document.getElementById('route-haribu').className = `toggle-btn${routeKey === 'haribu' ? ' active' : ''}`;
+    document.getElementById('day-weekday').className = `toggle-btn${serviceDay === 'weekday' ? ' active' : ''}`;
+    document.getElementById('day-weekend').className = `toggle-btn${serviceDay === 'weekend' ? ' active' : ''}`;
+    document.getElementById('dir-down').className = `toggle-btn${dir === 'down' ? ' active' : ''}`;
+    document.getElementById('dir-up').className = `toggle-btn${dir === 'up' ? ' active' : ''}`;
+  }
+
+  function render() {
+    updateControls();
+
+    const route = data.routes[routeKey];
+    const [fromStop, toStop] = route.stops[dir];
+    const trips = getTrips();
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const targetStopLabel = getTargetStopLabel();
+
+    let nextIndex = -1;
+    let minDiff = Infinity;
+    trips.forEach((trip, index) => {
+      const diff = toMinutes(trip.arrival) - nowMinutes;
+      if (diff >= 0 && diff < minDiff) {
+        minDiff = diff;
+        nextIndex = index;
+      }
+    });
+
+    document.getElementById('route-summary-title').textContent = `${fromStop} → ${toStop}`;
+    document.getElementById('route-summary-copy').textContent =
+      `${targetStopLabel}への到着時刻が早い順に並べています。${serviceDay === 'weekday' ? '平日' : '休日'}ダイヤを表示中です。`;
+
+    const list = document.getElementById('trip-list');
+    if (!trips.length) {
+      list.innerHTML = '<div class="empty">この条件の便は見つかりませんでした。</div>';
+      return;
+    }
+
+    const groups = {};
+    trips.forEach((trip, index) => {
+      const hour = trip.arrival.split(':')[0];
+      if (!groups[hour]) groups[hour] = [];
+      groups[hour].push({ trip, index });
+    });
+
+    let html = '';
+    Object.keys(groups).sort((a, b) => Number(a) - Number(b)).forEach((hour) => {
+      html += `<div class="hour-sep"><div class="hour-sep-num">${hour}</div><div class="hour-sep-line"></div></div>`;
+      groups[hour].forEach(({ trip, index }) => {
+        const isPast = toMinutes(trip.arrival) < nowMinutes;
+        const isNext = index === nextIndex;
+        html += `
+          <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
+            <div class="trip-main">
+              <span class="route-no">${trip.route_no}</span>
+              <div class="trip-destination">${trip.destination}${isNext ? '<span class="next-chip">次着</span>' : ''}</div>
+              <div class="trip-meta">のりば ${trip.platform}</div>
+            </div>
+            <div class="time-cell">
+              <div class="time-label">出発</div>
+              <div class="time-value">${trip.departure}</div>
+            </div>
+            <div class="time-cell arrival">
+              <div class="time-label">到着</div>
+              <div class="time-value">${trip.arrival}</div>
+            </div>
+          </section>
+        `;
+      });
+    });
+
+    list.innerHTML = html;
+  }
+
+  window.setRoute = function setRoute(nextRoute) {
+    routeKey = nextRoute;
+    render();
+  };
+
+  window.setServiceDay = function setServiceDay(nextDay) {
+    serviceDay = nextDay;
+    localStorage.setItem('bus-service-day', serviceDay);
+    render();
+  };
+
+  window.setDir = function setDir(nextDir) {
+    dir = nextDir;
+    render();
+  };
+
+  window.scrollToNext = function scrollToNext() {
+    const el = document.querySelector('.trip-row.next');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  setInterval(updateClock, 1000);
+  updateClock();
+  render();
+})().catch(showDataLoadError);
+
+function loadBusData() {
+  if (window.BUS_TIMETABLE_DATA) {
+    return Promise.resolve(window.BUS_TIMETABLE_DATA);
+  }
+
+  const version = '20260423';
+  const candidates = [
+    `../../data/bus/timetable-data.js?v=${version}`,
+    `../data/bus/timetable-data.js?v=${version}`,
+    `./data/bus/timetable-data.js?v=${version}`,
+    `data/bus/timetable-data.js?v=${version}`
+  ];
+
+  return [...new Set(candidates)].reduce((promise, src) => {
+    return promise.catch(() => loadScript(src));
+  }, Promise.reject(new Error('Initial load attempt')));
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      if (window.BUS_TIMETABLE_DATA) resolve(window.BUS_TIMETABLE_DATA);
+      else reject(new Error(`Loaded ${src} but bus timetable data was undefined`));
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function showDataLoadError(error) {
+  const list = document.getElementById('trip-list');
+  list.innerHTML = '<div class="error-box">Data load error: data/bus/timetable-data.js was not loaded.</div>';
+  console.error(error);
+}
+</script>
 </body>
 </html>
