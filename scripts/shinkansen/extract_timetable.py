@@ -2,7 +2,7 @@
 """Extract Koriyama-stop Tohoku Shinkansen data from JR East timetable pages.
 
 This script fetches the JR East line timetable pages and converts them into the
-`HTML/shinkansen-timetable-data.js` structure used by this project.
+`data/shinkansen/timetable-data.js` structure used by this project.
 """
 
 from __future__ import annotations
@@ -383,8 +383,8 @@ def render_js(data: dict[str, list[Train]]) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    repo_root = Path(__file__).resolve().parents[1]
-    default_output = repo_root / "HTML" / "shinkansen-timetable-data.js"
+    repo_root = Path(__file__).resolve().parents[2]
+    default_output = repo_root / "data" / "shinkansen" / "timetable-data.js"
 
     parser = argparse.ArgumentParser(
         description="Extract Koriyama-stop Shinkansen data from JR East timetable pages."

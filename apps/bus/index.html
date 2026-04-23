@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バス時刻表</title>
+<style>
+:root {
+  --ink: #16202b;
+  --paper: #f6f3ec;
+  --panel: #fffdf8;
+  --line: #d7cfbe;
+  --brand: #c05a2b;
+  --brand-deep: #7f3415;
+  --accent: #2a6f97;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(192, 90, 43, 0.18), transparent 28%),
+    linear-gradient(180deg, #efe5d4 0%, var(--paper) 42%, #f9f7f1 100%);
+}
+
+main {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero {
+  background: var(--panel);
+  border: 1px solid rgba(127, 52, 21, 0.15);
+  border-radius: 24px;
+  padding: 28px 22px;
+  box-shadow: 0 18px 40px rgba(22, 32, 43, 0.08);
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--brand-deep);
+  background: rgba(192, 90, 43, 0.12);
+}
+
+h1 {
+  margin: 14px 0 10px;
+  font-size: clamp(32px, 7vw, 56px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.lead {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.card {
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+}
+
+.btn-secondary {
+  color: var(--accent);
+  background: rgba(42, 111, 151, 0.1);
+}
+
+.status {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--brand);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 22px 18px;
+    border-radius: 18px;
+  }
+}
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <span class="eyebrow">MyTimeTable Bus</span>
+    <h1>バス時刻表</h1>
+    <p class="lead">
+      GitHub Pages 上で公開するバス時刻表ページの入口です。ここをベースに、
+      路線ごとの時刻表やデータ連携をこれから追加していきます。
+    </p>
+
+    <div class="grid">
+      <article class="card">
+        <h2>公開URL</h2>
+        <p>
+          このページは `apps/bus/index.html` にあるので、GitHub Pages では
+          `/apps/bus/` のURLで直接開けます。
+        </p>
+      </article>
+      <article class="card">
+        <h2>次の実装先</h2>
+        <p>
+          バス用データは `data/bus/`、抽出スクリプトは `scripts/bus/` に揃える前提です。
+        </p>
+      </article>
+      <article class="card">
+        <h2>既存ページ</h2>
+        <p>
+          新幹線ページは引き続き `apps/shinkansen/` にあり、別パスURLで共存できます。
+        </p>
+      </article>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="./">バスURLを確認</a>
+      <a class="btn btn-secondary" href="../shinkansen/">新幹線ページへ</a>
+    </div>
+
+    <div class="status">
+      現在は公開用プレースホルダの状態です。次にバス会社・路線・停留所の単位を決めて、
+      実データを載せる画面へ広げていけます。
+    </div>
+  </section>
+</main>
+</body>
+</html>

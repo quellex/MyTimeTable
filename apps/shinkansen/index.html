@@ -400,16 +400,12 @@ function loadTimetableData() {
 }
 
 function buildDataScriptCandidates(version) {
-  const currentPath = window.location.pathname || '';
-  const normalizedPath = currentPath.replace(/\/+/g, '/');
   const candidates = [
-    `./shinkansen-timetable-data.js?v=${version}`,
-    `HTML/shinkansen-timetable-data.js?v=${version}`
+    `../../data/shinkansen/timetable-data.js?v=${version}`,
+    `../data/shinkansen/timetable-data.js?v=${version}`,
+    `./data/shinkansen/timetable-data.js?v=${version}`,
+    `data/shinkansen/timetable-data.js?v=${version}`
   ];
-
-  if (normalizedPath.includes('/HTML/')) {
-    candidates.unshift(`../HTML/shinkansen-timetable-data.js?v=${version}`);
-  }
 
   return [...new Set(candidates)];
 }
@@ -429,7 +425,7 @@ function loadScript(src) {
 
 function showDataLoadError(error) {
   const list = document.getElementById('train-list');
-  list.innerHTML = '<div style="padding:14px;color:#c8312b;font-weight:700;">Data load error: shinkansen-timetable-data.js was not loaded.</div>';
+  list.innerHTML = '<div style="padding:14px;color:#c8312b;font-weight:700;">Data load error: data/shinkansen/timetable-data.js was not loaded.</div>';
   console.error(error);
 }
 </script>
