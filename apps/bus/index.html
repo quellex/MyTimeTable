@@ -15,7 +15,7 @@
   --accent: #2f7b83;
   --accent-soft: #d9eeef;
   --muted: #786d60;
-  --header-h: 220px;
+  --header-h: 168px;
   --next-bg: #fff4ea;
 }
 
@@ -254,7 +254,19 @@ main {
   color: var(--muted);
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
+}
+
+.route-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(191, 90, 45, 0.14);
+  color: var(--brand-deep);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .next-chip {
@@ -365,19 +377,11 @@ main {
     <div class="bus-icon">🚌</div>
     <div class="header-title">
       <h1>郡山駅 バス時刻表</h1>
-      <p>出発時刻ベースで一覧できる時刻表</p>
+      <p>台新方面と針生方面を同じ画面で一覧表示</p>
     </div>
     <div class="clock">
       <div id="live-clock">--:--</div>
       <div id="live-date">----.--.--</div>
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="control-title">区間</div>
-    <div class="toggle-row">
-      <button class="toggle-btn active" id="route-taishin" onclick="setRoute('taishin')">郡山駅前 ⇄ 台新</button>
-      <button class="toggle-btn" id="route-haribu" onclick="setRoute('haribu')">郡山駅前 ⇄ 針生</button>
     </div>
   </div>
 
@@ -414,7 +418,6 @@ main {
 (async function init() {
   const data = await loadBusData();
   const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
-  let routeKey = 'taishin';
   let serviceDay = loadInitialServiceDay();
   let dir = 'down';
 
@@ -441,7 +444,14 @@ main {
   }
 
   function getTrips() {
-    return [...data.routes[routeKey][serviceDay][dir]].sort((a, b) => {
+    const trips = Object.entries(data.routes).flatMap(([, route]) => {
+      return route[serviceDay][dir].map((trip) => ({
+        ...trip,
+        stopLabel: route.stops[dir][1]
+      }));
+    });
+
+    return trips.sort((a, b) => {
       const departureDiff = toMinutes(a.departure) - toMinutes(b.departure);
       if (departureDiff !== 0) return departureDiff;
       return toMinutes(a.arrival) - toMinutes(b.arrival);
@@ -449,8 +459,6 @@ main {
   }
 
   function updateControls() {
-    document.getElementById('route-taishin').className = `toggle-btn${routeKey === 'taishin' ? ' active' : ''}`;
-    document.getElementById('route-haribu').className = `toggle-btn${routeKey === 'haribu' ? ' active' : ''}`;
     document.getElementById('day-weekday').className = `toggle-btn${serviceDay === 'weekday' ? ' active' : ''}`;
     document.getElementById('day-weekend').className = `toggle-btn${serviceDay === 'weekend' ? ' active' : ''}`;
     document.getElementById('dir-down').className = `toggle-btn${dir === 'down' ? ' active' : ''}`;
@@ -460,8 +468,6 @@ main {
   function render() {
     updateControls();
 
-    const route = data.routes[routeKey];
-    const [fromStop, toStop] = route.stops[dir];
     const trips = getTrips();
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -475,8 +481,10 @@ main {
       }
     });
 
-    document.getElementById('lbl-departure').innerHTML = `${fromStop}<span class="en">DEPART</span>`;
-    document.getElementById('lbl-arrival').innerHTML = `${toStop}<span class="en">ARRIVE</span>`;
+    document.getElementById('lbl-departure').innerHTML =
+      `${dir === 'down' ? '郡山駅前' : '台新 / 針生'}<span class="en">DEPART</span>`;
+    document.getElementById('lbl-arrival').innerHTML =
+      `${dir === 'down' ? '台新 / 針生' : '郡山駅前'}<span class="en">ARRIVE</span>`;
 
     const list = document.getElementById('trip-list');
     if (!trips.length) {
@@ -502,7 +510,7 @@ main {
             <div class="trip-main">
               <span class="route-no">${trip.route_no}</span>
               <div class="trip-destination">${trip.destination}</div>
-              <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>のりば ${trip.platform}</span></div>
+              <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span class="route-tag">${trip.stopLabel}方面</span><span>のりば ${trip.platform}</span></div>
             </div>
             <div class="time-cell departure">
               <div class="time-label dep">発</div>
@@ -519,11 +527,6 @@ main {
 
     list.innerHTML = html;
   }
-
-  window.setRoute = function setRoute(nextRoute) {
-    routeKey = nextRoute;
-    render();
-  };
 
   window.setServiceDay = function setServiceDay(nextDay) {
     serviceDay = nextDay;
