@@ -106,12 +106,15 @@ header {
 .toggle-btn {
   flex: 1;
   min-height: 38px;
+  padding: 6px 8px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.66);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.25;
+  white-space: normal;
   cursor: pointer;
 }
 
@@ -349,24 +352,56 @@ main {
 }
 
 @media (max-width: 760px) {
-  :root { --header-h: 224px; }
+  :root { --header-h: 258px; }
+  header {
+    padding-bottom: 12px;
+  }
+  .toggle-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .toggle-btn {
+    min-height: 44px;
+    font-size: 11px;
+  }
   .col-header,
   .trip-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 96px 1fr 1fr;
   }
   .col-header {
     top: var(--header-h);
   }
   .col-label:first-child {
-    text-align: center;
-    padding-left: 4px;
+    text-align: left;
+    padding-left: 10px;
+  }
+  .col-label {
+    font-size: 9px;
+    padding: 7px 2px;
+  }
+  .trip-main {
+    padding: 8px 4px 8px 10px;
+  }
+  .trip-destination {
+    font-size: 11px;
+  }
+  .trip-meta {
+    font-size: 9px;
+  }
+  .route-tag,
+  .route-no {
+    font-size: 8px;
   }
   .time-cell {
-    border-left: none;
-    border-top: 1px solid #ece4d7;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 12px 14px;
+    border-left: 1px solid #ece4d7;
+    border-top: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 4px;
+  }
+  .time-value {
+    font-size: 17px;
   }
 }
 </style>
