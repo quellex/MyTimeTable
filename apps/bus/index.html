@@ -15,7 +15,8 @@
   --accent: #2f7b83;
   --accent-soft: #d9eeef;
   --muted: #786d60;
-  --header-h: 190px;
+  --header-h: 220px;
+  --next-bg: #fff4ea;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -37,7 +38,7 @@ header {
   color: #fff;
   backdrop-filter: blur(16px);
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.25);
-  min-height: var(--header-h);
+  height: var(--header-h);
 }
 
 .header-top {
@@ -123,35 +124,70 @@ header {
 main {
   width: min(980px, calc(100% - 24px));
   margin: 0 auto;
-  padding: 18px 0 80px;
+  padding: 0 0 80px;
 }
 
-.route-summary {
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(128, 55, 22, 0.14);
-  box-shadow: 0 14px 32px rgba(22, 32, 43, 0.08);
+.col-header {
+  width: min(980px, calc(100% - 24px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 114px 1fr 1fr;
+  background: rgba(41, 57, 77, 0.98);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: var(--header-h);
+  z-index: 25;
 }
 
-.route-summary strong {
+.col-label {
+  padding: 7px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.64);
+  text-align: center;
+}
+
+.col-label:first-child {
+  text-align: left;
+  padding-left: 14px;
+}
+
+.col-label.info {
+  color: #ffd2ba;
+  border-bottom: 2px solid #ffd2ba;
+}
+
+.col-label.dep {
+  color: #a7dbe0;
+  border-bottom: 2px solid #7fb9c1;
+}
+
+.col-label.arr {
+  color: #ffb485;
+  border-bottom: 2px solid #ff9a5b;
+}
+
+.col-label .en {
   display: block;
-  font-size: 18px;
+  font-size: 8px;
+  opacity: 0.55;
+  letter-spacing: 0.12em;
 }
 
-.route-summary p {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.7;
+.bus-list {
+  padding-bottom: 80px;
 }
 
 .hour-sep {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 18px;
-  padding: 0 4px;
+  padding: 8px 14px 4px;
+  position: sticky;
+  top: calc(var(--header-h) + 33px);
+  background: var(--paper);
+  z-index: 20;
 }
 
 .hour-sep-num {
@@ -169,19 +205,17 @@ main {
 
 .trip-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(92px, 0.8fr) minmax(92px, 0.8fr);
+  grid-template-columns: 114px 1fr 1fr;
   gap: 0;
-  margin-top: 10px;
-  overflow: hidden;
-  border-radius: 18px;
+  align-items: stretch;
   background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: 0 12px 28px rgba(22, 32, 43, 0.06);
+  border-bottom: 1px solid #e7dfd1;
+  min-height: 58px;
 }
 
 .trip-row.next {
-  border-color: rgba(191, 90, 45, 0.65);
-  box-shadow: 0 12px 28px rgba(191, 90, 45, 0.15);
+  background: var(--next-bg);
+  border-left: 3px solid var(--brand);
 }
 
 .trip-row.past {
@@ -189,67 +223,91 @@ main {
 }
 
 .trip-main {
-  padding: 14px 14px 15px;
+  padding: 8px 4px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
 
 .route-no {
-  display: inline-block;
-  margin-bottom: 7px;
-  padding: 4px 8px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 3px;
   background: rgba(47, 123, 131, 0.12);
   color: var(--accent);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .trip-destination {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
 }
 
 .trip-meta {
-  margin-top: 7px;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .next-chip {
   display: inline-block;
-  margin-left: 8px;
-  padding: 3px 7px;
-  border-radius: 999px;
+  padding: 1px 4px;
+  border-radius: 3px;
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
   color: #fff;
+  font-size: 8px;
   font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .time-cell {
-  padding: 14px 8px;
+  padding: 6px 4px;
   border-left: 1px solid #ece4d7;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 2px;
 }
 
 .time-label {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 2px;
 }
 
 .time-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--ink);
   line-height: 1;
 }
 
-.time-cell.arrival {
-  background: linear-gradient(180deg, rgba(47, 123, 131, 0.08), rgba(47, 123, 131, 0.02));
+.time-cell.departure .time-value {
+  color: var(--accent);
+}
+
+.time-cell.arrival .time-value {
+  color: var(--brand-deep);
+}
+
+.time-label.dep {
+  background: var(--accent);
+}
+
+.time-label.arr {
+  background: var(--brand);
 }
 
 .empty,
@@ -280,8 +338,16 @@ main {
 
 @media (max-width: 760px) {
   :root { --header-h: 224px; }
+  .col-header,
   .trip-row {
     grid-template-columns: 1fr;
+  }
+  .col-header {
+    top: var(--header-h);
+  }
+  .col-label:first-child {
+    text-align: center;
+    padding-left: 4px;
   }
   .time-cell {
     border-left: none;
@@ -289,10 +355,6 @@ main {
     flex-direction: row;
     justify-content: space-between;
     padding: 12px 14px;
-  }
-  .time-cell.arrival {
-    border-bottom-left-radius: 18px;
-    border-bottom-right-radius: 18px;
   }
 }
 </style>
@@ -336,12 +398,14 @@ main {
   </div>
 </header>
 
+<div class="col-header">
+  <div class="col-label info">便<span class="en">DESTINATION</span></div>
+  <div class="col-label dep" id="lbl-departure">出発<span class="en">DEPART</span></div>
+  <div class="col-label arr" id="lbl-arrival">到着<span class="en">ARRIVE</span></div>
+</div>
+
 <main>
-  <section class="route-summary">
-    <strong id="route-summary-title">郡山駅前 → 台新</strong>
-    <p id="route-summary-copy">到着時刻が早い順に並べています。行き先・出発時刻・到着時刻だけを見やすくまとめています。</p>
-  </section>
-  <div id="trip-list"></div>
+  <div class="bus-list" id="trip-list"></div>
 </main>
 
 <button class="fab" onclick="scrollToNext()" title="次の便へ">⏱</button>
@@ -380,10 +444,6 @@ main {
     return data.routes[routeKey][serviceDay][dir];
   }
 
-  function getTargetStopLabel() {
-    return data.routes[routeKey].stops[dir][1];
-  }
-
   function updateControls() {
     document.getElementById('route-taishin').className = `toggle-btn${routeKey === 'taishin' ? ' active' : ''}`;
     document.getElementById('route-haribu').className = `toggle-btn${routeKey === 'haribu' ? ' active' : ''}`;
@@ -401,8 +461,6 @@ main {
     const trips = getTrips();
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    const targetStopLabel = getTargetStopLabel();
-
     let nextIndex = -1;
     let minDiff = Infinity;
     trips.forEach((trip, index) => {
@@ -413,9 +471,8 @@ main {
       }
     });
 
-    document.getElementById('route-summary-title').textContent = `${fromStop} → ${toStop}`;
-    document.getElementById('route-summary-copy').textContent =
-      `${targetStopLabel}への到着時刻が早い順に並べています。${serviceDay === 'weekday' ? '平日' : '休日'}ダイヤを表示中です。`;
+    document.getElementById('lbl-departure').innerHTML = `${fromStop}<span class="en">DEPART</span>`;
+    document.getElementById('lbl-arrival').innerHTML = `${toStop}<span class="en">ARRIVE</span>`;
 
     const list = document.getElementById('trip-list');
     if (!trips.length) {
@@ -440,15 +497,15 @@ main {
           <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
             <div class="trip-main">
               <span class="route-no">${trip.route_no}</span>
-              <div class="trip-destination">${trip.destination}${isNext ? '<span class="next-chip">次着</span>' : ''}</div>
-              <div class="trip-meta">のりば ${trip.platform}</div>
+              <div class="trip-destination">${trip.destination}</div>
+              <div class="trip-meta">${isNext ? '<span class="next-chip">次着</span>' : ''}<span>のりば ${trip.platform}</span></div>
             </div>
-            <div class="time-cell">
-              <div class="time-label">出発</div>
+            <div class="time-cell departure">
+              <div class="time-label dep">発</div>
               <div class="time-value">${trip.departure}</div>
             </div>
             <div class="time-cell arrival">
-              <div class="time-label">到着</div>
+              <div class="time-label arr">着</div>
               <div class="time-value">${trip.arrival}</div>
             </div>
           </section>
