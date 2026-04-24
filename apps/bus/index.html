@@ -261,17 +261,6 @@ main {
   gap: 4px;
 }
 
-.route-tag {
-  display: inline-block;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: rgba(191, 90, 45, 0.14);
-  color: var(--brand-deep);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
 .next-chip {
   display: inline-block;
   padding: 1px 4px;
@@ -389,7 +378,6 @@ main {
   .trip-meta {
     font-size: 9px;
   }
-  .route-tag,
   .route-no {
     font-size: 8px;
   }
@@ -482,7 +470,8 @@ main {
     const trips = Object.entries(data.routes).flatMap(([, route]) => {
       return route[serviceDay][dir].map((trip) => ({
         ...trip,
-        stopLabel: route.stops[dir][1]
+        fromStop: route.stops[dir][0],
+        toStop: route.stops[dir][1]
       }));
     });
 
@@ -545,14 +534,14 @@ main {
             <div class="trip-main">
               <span class="route-no">${trip.route_no}</span>
               <div class="trip-destination">${trip.destination}</div>
-              <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span class="route-tag">${trip.stopLabel}方面</span><span>のりば ${trip.platform}</span></div>
+              <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>のりば ${trip.platform}</span></div>
             </div>
             <div class="time-cell departure">
-              <div class="time-label dep">発</div>
+              <div class="time-label dep">${trip.fromStop}</div>
               <div class="time-value">${trip.departure}</div>
             </div>
             <div class="time-cell arrival">
-              <div class="time-label arr">着</div>
+              <div class="time-label arr">${trip.toStop}</div>
               <div class="time-value">${trip.arrival}</div>
             </div>
           </section>
