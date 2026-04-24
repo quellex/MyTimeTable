@@ -365,7 +365,7 @@ main {
     <div class="bus-icon">🚌</div>
     <div class="header-title">
       <h1>郡山駅 バス時刻表</h1>
-      <p>到着時刻ベースで比較できる一覧</p>
+      <p>出発時刻ベースで一覧できる時刻表</p>
     </div>
     <div class="clock">
       <div id="live-clock">--:--</div>
@@ -441,7 +441,11 @@ main {
   }
 
   function getTrips() {
-    return data.routes[routeKey][serviceDay][dir];
+    return [...data.routes[routeKey][serviceDay][dir]].sort((a, b) => {
+      const departureDiff = toMinutes(a.departure) - toMinutes(b.departure);
+      if (departureDiff !== 0) return departureDiff;
+      return toMinutes(a.arrival) - toMinutes(b.arrival);
+    });
   }
 
   function updateControls() {
@@ -464,7 +468,7 @@ main {
     let nextIndex = -1;
     let minDiff = Infinity;
     trips.forEach((trip, index) => {
-      const diff = toMinutes(trip.arrival) - nowMinutes;
+      const diff = toMinutes(trip.departure) - nowMinutes;
       if (diff >= 0 && diff < minDiff) {
         minDiff = diff;
         nextIndex = index;
@@ -482,7 +486,7 @@ main {
 
     const groups = {};
     trips.forEach((trip, index) => {
-      const hour = trip.arrival.split(':')[0];
+      const hour = trip.departure.split(':')[0];
       if (!groups[hour]) groups[hour] = [];
       groups[hour].push({ trip, index });
     });
@@ -491,14 +495,14 @@ main {
     Object.keys(groups).sort((a, b) => Number(a) - Number(b)).forEach((hour) => {
       html += `<div class="hour-sep"><div class="hour-sep-num">${hour}</div><div class="hour-sep-line"></div></div>`;
       groups[hour].forEach(({ trip, index }) => {
-        const isPast = toMinutes(trip.arrival) < nowMinutes;
+        const isPast = toMinutes(trip.departure) < nowMinutes;
         const isNext = index === nextIndex;
         html += `
           <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
             <div class="trip-main">
               <span class="route-no">${trip.route_no}</span>
               <div class="trip-destination">${trip.destination}</div>
-              <div class="trip-meta">${isNext ? '<span class="next-chip">次着</span>' : ''}<span>のりば ${trip.platform}</span></div>
+              <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>のりば ${trip.platform}</span></div>
             </div>
             <div class="time-cell departure">
               <div class="time-label dep">発</div>

@@ -118,7 +118,7 @@ def parse_trips(html: str) -> list[BusTrip]:
             )
         )
 
-    return sorted(trips, key=lambda trip: (sort_key_hhmm(trip.arrival), sort_key_hhmm(trip.departure), trip.route_no))
+    return sorted(trips, key=lambda trip: (sort_key_hhmm(trip.departure), sort_key_hhmm(trip.arrival), trip.route_no))
 
 
 def build_data() -> dict[str, object]:
