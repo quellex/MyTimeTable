@@ -9,6 +9,7 @@ import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -54,6 +55,22 @@ ROUTES = {
     },
 }
 
+MIDPOINTS = {
+    "taishin": {
+        "stop_name": "静御前堂",
+        "urls": {
+            "down": {
+                "weekday": f"{BASE_URL}/fromto/result/1557/4104/?week=1",
+                "weekend": f"{BASE_URL}/fromto/result/1557/4104/?week=2",
+            },
+            "up": {
+                "weekday": f"{BASE_URL}/fromto/result/4104/1636/?week=1",
+                "weekend": f"{BASE_URL}/fromto/result/4104/1636/?week=2",
+            },
+        },
+    }
+}
+
 
 @dataclass(frozen=True)
 class BusTrip:
@@ -62,6 +79,7 @@ class BusTrip:
     platform: str
     departure: str
     arrival: str
+    midpoint_time: str | None = None
 
 
 def fetch_html(url: str) -> str:
@@ -121,12 +139,65 @@ def parse_trips(html: str) -> list[BusTrip]:
     return sorted(trips, key=lambda trip: (sort_key_hhmm(trip.departure), sort_key_hhmm(trip.arrival), trip.route_no))
 
 
-def build_data() -> dict[str, object]:
-    routes: dict[str, object] = {}
+def build_midpoint_map(trips: list[BusTrip]) -> dict[tuple[str, str], str]:
+    midpoint_map: dict[tuple[str, str], str] = {}
+    for trip in trips:
+        midpoint_map[(trip.route_no, trip.departure)] = trip.arrival
+    return midpoint_map
+
+
+def build_upstream_map(trips: list[BusTrip]) -> dict[tuple[str, str], str]:
+    upstream_map: dict[tuple[str, str], str] = {}
+    for trip in trips:
+        upstream_map[(trip.route_no, trip.arrival)] = trip.departure
+    return upstream_map
+
+
+def with_midpoint_times(
+    trips: list[BusTrip],
+    midpoint_map: dict[tuple[str, str], str],
+) -> list[BusTrip]:
+    enriched: list[BusTrip] = []
+    for trip in trips:
+        enriched.append(
+            BusTrip(
+                route_no=trip.route_no,
+                destination=trip.destination,
+                platform=trip.platform,
+                departure=trip.departure,
+                arrival=trip.arrival,
+                midpoint_time=midpoint_map.get((trip.route_no, trip.departure)),
+            )
+        )
+    return enriched
+
+
+def with_upstream_times(
+    trips: list[BusTrip],
+    upstream_map: dict[tuple[str, str], str],
+) -> list[BusTrip]:
+    enriched: list[BusTrip] = []
+    for trip in trips:
+        enriched.append(
+            BusTrip(
+                route_no=trip.route_no,
+                destination=trip.destination,
+                platform=trip.platform,
+                departure=trip.departure,
+                arrival=trip.arrival,
+                midpoint_time=upstream_map.get((trip.route_no, trip.departure)),
+            )
+        )
+    return enriched
+
+
+def build_data() -> dict[str, Any]:
+    routes: dict[str, Any] = {}
     for route_key, route_def in ROUTES.items():
         route_entry = {
             "label": route_def["label"],
             "stops": route_def["stops"],
+            "midpointStop": MIDPOINTS.get(route_key, {}).get("stop_name"),
             "weekday": {"down": [], "up": []},
             "weekend": {"down": [], "up": []},
         }
@@ -134,9 +205,20 @@ def build_data() -> dict[str, object]:
         for direction in ("down", "up"):
             for service_day in ("weekday", "weekend"):
                 html = fetch_html(route_def["urls"][direction][service_day])
-                route_entry[service_day][direction] = [
-                    asdict(trip) for trip in parse_trips(html)
-                ]
+                trips = parse_trips(html)
+                midpoint_def = MIDPOINTS.get(route_key)
+                if midpoint_def is not None:
+                    midpoint_html = fetch_html(midpoint_def["urls"][direction][service_day])
+                    midpoint_trips = parse_trips(midpoint_html)
+                    if direction == "down":
+                        trips = with_midpoint_times(
+                            trips, build_midpoint_map(midpoint_trips)
+                        )
+                    else:
+                        trips = with_upstream_times(
+                            trips, build_upstream_map(midpoint_trips)
+                        )
+                route_entry[service_day][direction] = [asdict(trip) for trip in trips]
 
         routes[route_key] = route_entry
 

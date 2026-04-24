@@ -134,7 +134,7 @@ main {
   width: min(980px, calc(100% - 24px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 114px 1fr 1fr;
+  grid-template-columns: 114px 1fr 1fr 1fr;
   background: rgba(41, 57, 77, 0.98);
   border-bottom: 2px solid rgba(255, 255, 255, 0.08);
   position: sticky;
@@ -169,6 +169,11 @@ main {
 .col-label.arr {
   color: #ffb485;
   border-bottom: 2px solid #ff9a5b;
+}
+
+.col-label.mid {
+  color: #d8c4ff;
+  border-bottom: 2px solid #aa87e6;
 }
 
 .col-label .en {
@@ -208,7 +213,7 @@ main {
 
 .trip-row {
   display: grid;
-  grid-template-columns: 114px 1fr 1fr;
+  grid-template-columns: 114px 1fr 1fr 1fr;
   gap: 0;
   align-items: stretch;
   background: var(--panel);
@@ -306,12 +311,20 @@ main {
   color: var(--brand-deep);
 }
 
+.time-cell.midpoint .time-value {
+  color: #6c4da6;
+}
+
 .time-label.dep {
   background: var(--accent);
 }
 
 .time-label.arr {
   background: var(--brand);
+}
+
+.time-label.mid {
+  background: #7b5ab2;
 }
 
 .empty,
@@ -356,7 +369,7 @@ main {
   }
   .col-header,
   .trip-row {
-    grid-template-columns: 96px 1fr 1fr;
+    grid-template-columns: 90px 1fr 1fr 1fr;
   }
   .col-header {
     top: var(--header-h);
@@ -427,8 +440,9 @@ main {
 
 <div class="col-header">
   <div class="col-label info">便<span class="en">DESTINATION</span></div>
-  <div class="col-label dep" id="lbl-departure">出発<span class="en">DEPART</span></div>
-  <div class="col-label arr" id="lbl-arrival">到着<span class="en">ARRIVE</span></div>
+  <div class="col-label dep" id="lbl-col-1">出発<span class="en">STOP 1</span></div>
+  <div class="col-label mid" id="lbl-col-2">経由<span class="en">STOP 2</span></div>
+  <div class="col-label arr" id="lbl-col-3">到着<span class="en">STOP 3</span></div>
 </div>
 
 <main>
@@ -471,7 +485,8 @@ main {
       return route[serviceDay][dir].map((trip) => ({
         ...trip,
         fromStop: route.stops[dir][0],
-        toStop: route.stops[dir][1]
+        toStop: route.stops[dir][1],
+        midpointStop: route.midpointStop,
       }));
     });
 
@@ -505,10 +520,12 @@ main {
       }
     });
 
-    document.getElementById('lbl-departure').innerHTML =
-      `${dir === 'down' ? '郡山駅前' : '台新 / 針生'}<span class="en">DEPART</span>`;
-    document.getElementById('lbl-arrival').innerHTML =
-      `${dir === 'down' ? '台新 / 針生' : '郡山駅前'}<span class="en">ARRIVE</span>`;
+    document.getElementById('lbl-col-1').innerHTML =
+      `${dir === 'down' ? '郡山駅前' : '静御前堂'}<span class="en">STOP 1</span>`;
+    document.getElementById('lbl-col-2').innerHTML =
+      `${dir === 'down' ? '台新 / 針生' : '台新 / 針生'}<span class="en">STOP 2</span>`;
+    document.getElementById('lbl-col-3').innerHTML =
+      `${dir === 'down' ? '静御前堂' : '郡山駅前'}<span class="en">STOP 3</span>`;
 
     const list = document.getElementById('trip-list');
     if (!trips.length) {
@@ -529,6 +546,12 @@ main {
       groups[hour].forEach(({ trip, index }) => {
         const isPast = toMinutes(trip.departure) < nowMinutes;
         const isNext = index === nextIndex;
+        const firstStopLabel = dir === 'down' ? trip.fromStop : '静御前堂';
+        const firstStopTime = dir === 'down' ? trip.departure : (trip.midpoint_time || '');
+        const secondStopLabel = trip.fromStop;
+        const secondStopTime = dir === 'down' ? trip.arrival : trip.departure;
+        const thirdStopLabel = dir === 'down' ? '静御前堂' : trip.toStop;
+        const thirdStopTime = dir === 'down' ? (trip.midpoint_time || '') : trip.arrival;
         html += `
           <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
             <div class="trip-main">
@@ -537,12 +560,16 @@ main {
               <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>のりば ${trip.platform}</span></div>
             </div>
             <div class="time-cell departure">
-              <div class="time-label dep">${trip.fromStop}</div>
-              <div class="time-value">${trip.departure}</div>
+              <div class="time-label dep">${firstStopLabel}</div>
+              <div class="time-value">${firstStopTime}</div>
+            </div>
+            <div class="time-cell midpoint">
+              <div class="time-label mid">${secondStopLabel}</div>
+              <div class="time-value">${secondStopTime}</div>
             </div>
             <div class="time-cell arrival">
-              <div class="time-label arr">${trip.toStop}</div>
-              <div class="time-value">${trip.arrival}</div>
+              <div class="time-label arr">${thirdStopLabel}</div>
+              <div class="time-value">${thirdStopTime}</div>
             </div>
           </section>
         `;
