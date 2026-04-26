@@ -591,6 +591,32 @@ main {
     return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
   }
 
+  function listTop() {
+    const header = document.querySelector('.col-header');
+    return header ? header.getBoundingClientRect().bottom : 0;
+  }
+
+  function getVisibleStartMinutes() {
+    const rows = [...document.querySelectorAll('.trip-row')];
+    if (!rows.length) return null;
+    const top = listTop();
+    const visible = rows.find((row) => row.getBoundingClientRect().bottom > top + 1);
+    return visible ? Number(visible.dataset.startMinutes) : Number(rows[0].dataset.startMinutes);
+  }
+
+  function scrollToStartMinutes(minutes) {
+    if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return;
+    const rows = [...document.querySelectorAll('.trip-row')];
+    if (!rows.length) return;
+    const row = rows
+      .map((el) => ({ el, distance: Math.abs(Number(el.dataset.startMinutes) - minutes) }))
+      .sort((a, b) => a.distance - b.distance)[0].el;
+    window.scrollTo({
+      top: window.scrollY + row.getBoundingClientRect().top - listTop(),
+      behavior: 'auto'
+    });
+  }
+
   function getTrips() {
     const trips = Object.entries(data.routes).flatMap(([, route]) => {
       return route[serviceDay][dir].map((trip) => ({
@@ -615,7 +641,7 @@ main {
     document.getElementById('dir-up').className = `toggle-btn${dir === 'up' ? ' active' : ''}`;
   }
 
-  function render() {
+  function render(options = {}) {
     updateControls();
 
     const trips = getTrips();
@@ -654,7 +680,7 @@ main {
 
     let html = '';
     Object.keys(groups).sort((a, b) => Number(a) - Number(b)).forEach((hour) => {
-      html += `<div class="hour-sep"><div class="hour-sep-num">${hour}</div><div class="hour-sep-line"></div></div>`;
+      html += `<div class="hour-sep" data-hour="${hour}"><div class="hour-sep-num">${hour}</div><div class="hour-sep-line"></div></div>`;
       groups[hour].forEach(({ trip, index }) => {
         const isPast = toMinutes(trip.departure) < nowMinutes;
         const isNext = index === nextIndex;
@@ -665,7 +691,7 @@ main {
         const thirdStopLabel = dir === 'down' ? (trip.midpointStop || '') : trip.toStop;
         const thirdStopTime = dir === 'down' ? (trip.midpoint_time || '') : trip.arrival;
         html += `
-          <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
+          <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}" data-start-minutes="${toMinutes(trip.departure)}">
             <div class="trip-main">
               <span class="route-no">${trip.route_no}</span>
               <div class="trip-destination">${trip.destination}</div>
@@ -695,19 +721,20 @@ main {
       hasAutoScrolled = true;
       setTimeout(scrollToNextTrip, 0);
     }
+    if (options.scrollToStartMinutes !== undefined) setTimeout(() => scrollToStartMinutes(options.scrollToStartMinutes), 0);
   }
 
   window.setServiceDay = function setServiceDay(nextDay) {
+    const visibleStartMinutes = getVisibleStartMinutes();
     serviceDay = nextDay;
     localStorage.setItem('bus-service-day', serviceDay);
-    render();
-    scrollToNextTrip();
+    render({ scrollToStartMinutes: visibleStartMinutes });
   };
 
   window.setDir = function setDir(nextDir) {
+    const visibleStartMinutes = getVisibleStartMinutes();
     dir = nextDir;
-    render();
-    scrollToNextTrip();
+    render({ scrollToStartMinutes: visibleStartMinutes });
   };
 
   window.scrollToNext = function scrollToNext() {

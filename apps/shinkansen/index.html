@@ -288,6 +288,29 @@ header {
     const diff = Math.abs(toMins(end) - toMins(start));
     return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
   }
+  function listTop() {
+    const header = document.querySelector('.col-header');
+    return header ? header.getBoundingClientRect().bottom : 0;
+  }
+  function getVisibleStartMinutes() {
+    const rows = [...document.querySelectorAll('.train-row')];
+    if (!rows.length) return null;
+    const top = listTop();
+    const visible = rows.find((row) => row.getBoundingClientRect().bottom > top + 1);
+    return visible ? Number(visible.dataset.startMinutes) : Number(rows[0].dataset.startMinutes);
+  }
+  function scrollToStartMinutes(minutes) {
+    if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return;
+    const rows = [...document.querySelectorAll('.train-row')];
+    if (!rows.length) return;
+    const row = rows
+      .map((el) => ({ el, distance: Math.abs(Number(el.dataset.startMinutes) - minutes) }))
+      .sort((a, b) => a.distance - b.distance)[0].el;
+    window.scrollTo({
+      top: window.scrollY + row.getBoundingClientRect().top - listTop(),
+      behavior:'auto'
+    });
+  }
   function loadInitialServiceDay() {
     const saved = localStorage.getItem('shinkansen-service-day');
     if (saved === 'weekday' || saved === 'weekend') return saved;
@@ -300,7 +323,7 @@ header {
   }
 
   // ── Render ─────────────────────────────────────────────
-  function render() {
+  function render(options = {}) {
     document.getElementById('btn-down').className = 'dir-btn'+(dir==='down'?' active':'');
     document.getElementById('btn-up').className   = 'dir-btn'+(dir==='up'  ?' active':'');
 
@@ -340,7 +363,7 @@ header {
     let html = '';
 
     Object.keys(groups).sort((a,b)=>+a-+b).forEach(hour => {
-      html += `<div class="hour-sep">
+      html += `<div class="hour-sep" data-hour="${hour}">
         <span class="hour-sep-num">${hour}</span>
         <div class="hour-sep-line"></div>
       </div>`;
@@ -360,7 +383,7 @@ header {
         const c0 = dir==='down' ? 'tokyo'    : 'koriyama';
         const c2 = dir==='down' ? 'koriyama' : 'tokyo';
 
-        html += `<div class="${cls}">
+        html += `<div class="${cls}" data-start-minutes="${toMins(t0)}">
           <div class="cell-info">
             <span class="train-badge badge-${t.type}">${t.name}</span>
             <div class="train-meta">
@@ -385,15 +408,21 @@ header {
     });
 
     list.innerHTML = html;
-    scrollToNow();
+    if (options.scrollToStartMinutes !== undefined) setTimeout(() => scrollToStartMinutes(options.scrollToStartMinutes), 0);
+    if (options.scrollToNow) setTimeout(scrollToNow, 0);
   }
 
-  window.setDir = function setDir(d) { dir=d; render(); };
+  window.setDir = function setDir(d) {
+    const visibleStartMinutes = getVisibleStartMinutes();
+    dir=d;
+    render({ scrollToStartMinutes: visibleStartMinutes });
+  };
   window.setServiceDay = function setServiceDay(nextServiceDay) {
+    const visibleStartMinutes = getVisibleStartMinutes();
     serviceDay = nextServiceDay;
     localStorage.setItem('shinkansen-service-day', serviceDay);
     updateServiceDayUI();
-    render();
+    render({ scrollToStartMinutes: visibleStartMinutes });
   };
   window.scrollToNow = function scrollToNow() {
     const el = document.querySelector('.train-row.next');
@@ -401,7 +430,7 @@ header {
   };
 
   setInterval(render, 60000);
-  render();
+  render({ scrollToNow: true });
 })().catch(showDataLoadError);
 
 function loadTimetableData() {
