@@ -416,12 +416,42 @@ main {
   transform: scale(0.9);
 }
 
+.app-switch {
+  position: fixed;
+  left: 20px;
+  bottom: 24px;
+  z-index: 200;
+  min-width: 112px;
+  height: 50px;
+  padding: 0 14px;
+  border-radius: 25px;
+  background: var(--rail);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.app-switch:active {
+  transform: scale(0.96);
+}
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .bus-list {
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   .fab {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .app-switch {
     bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
@@ -500,6 +530,7 @@ main {
   <div class="bus-list" id="trip-list"></div>
 </main>
 
+<a class="app-switch" href="../shinkansen/index.html" title="新幹線時刻表へ">🚄 新幹線</a>
 <button class="fab" onclick="scrollToNext()" title="次の便へ">⏱</button>
 
 <script>
@@ -508,6 +539,7 @@ main {
   const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
   let serviceDay = loadInitialServiceDay();
   let dir = 'down';
+  let hasAutoScrolled = false;
 
   function loadInitialServiceDay() {
     const saved = localStorage.getItem('bus-service-day');
@@ -633,6 +665,10 @@ main {
     });
 
     list.innerHTML = html;
+    if (!hasAutoScrolled) {
+      hasAutoScrolled = true;
+      setTimeout(scrollToNextTrip, 0);
+    }
   }
 
   window.setServiceDay = function setServiceDay(nextDay) {
@@ -647,9 +683,13 @@ main {
   };
 
   window.scrollToNext = function scrollToNext() {
+    scrollToNextTrip();
+  };
+
+  function scrollToNextTrip() {
     const el = document.querySelector('.trip-row.next');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
+  }
 
   setInterval(updateClock, 1000);
   updateClock();

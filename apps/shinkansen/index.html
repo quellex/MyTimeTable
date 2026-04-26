@@ -182,9 +182,20 @@ header {
 }
 .fab:active { transform:scale(.9); }
 
+.app-switch {
+  position:fixed; bottom:24px; left:20px; z-index:200;
+  min-width:112px; height:50px; padding:0 14px;
+  background:var(--rail); color:#fff; border-radius:25px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  font-size:13px; font-weight:700; letter-spacing:.04em; text-decoration:none;
+}
+.app-switch:active { transform:scale(.96); }
+
 @supports (padding-bottom:env(safe-area-inset-bottom)) {
   .train-list { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
   .fab { bottom:calc(24px + env(safe-area-inset-bottom)); }
+  .app-switch { bottom:calc(24px + env(safe-area-inset-bottom)); }
 }
 </style>
 </head>
@@ -221,6 +232,7 @@ header {
 </div>
 
 <div class="train-list" id="train-list"></div>
+<a class="app-switch" href="../bus/index.html" title="バス時刻表へ">🚌 バス</a>
 <button class="fab" onclick="scrollToNow()">⏱</button>
 
 <script>
