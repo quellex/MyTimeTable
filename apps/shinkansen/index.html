@@ -47,13 +47,6 @@ header {
 .clock-block { margin-left:auto; text-align:right; }
 #live-clock { font-family:var(--mono); font-size:19px; line-height:1; }
 #live-date { font-size:9px; opacity:.6; letter-spacing:.06em; margin-top:1px; }
-.day-badge {
-  display:inline-block; font-size:9px; font-weight:700;
-  letter-spacing:.1em; padding:1px 6px; border-radius:3px; margin-top:3px;
-}
-.day-badge.weekday { background:rgba(200,49,43,.9); color:#fff; }
-.day-badge.weekend { background:var(--gold); color:var(--rail); }
-
 .day-toggle {
   display:flex;
   padding:0 14px 8px;
@@ -86,7 +79,10 @@ header {
   background:rgba(255,255,255,.12); color:rgba(255,255,255,.55);
   transition:background .18s,color .18s; user-select:none;
 }
-.dir-btn.active { background:var(--accent); color:#fff; }
+.dir-btn.active {
+  background:rgba(255,255,255,.94);
+  color:var(--rail);
+}
 
 /* Column headers */
 .col-header {
@@ -211,7 +207,6 @@ header {
     <div class="clock-block">
       <div id="live-clock">--:--</div>
       <div id="live-date">----.--.--</div>
-      <div id="day-badge" class="day-badge weekday">平日</div>
     </div>
   </div>
   <div class="day-toggle">
@@ -272,9 +267,6 @@ header {
   }
   function isWeekendMode() { return serviceDay === 'weekend'; }
   function updateServiceDayUI() {
-    const badge = document.getElementById('day-badge');
-    badge.textContent = isWeekendMode() ? '休日ダイヤ' : '平日ダイヤ';
-    badge.className = `day-badge ${isWeekendMode() ? 'weekend' : 'weekday'}`;
     document.getElementById('btn-weekday').className = `day-toggle-btn${serviceDay==='weekday' ? ' active' : ''}`;
     document.getElementById('btn-weekend').className = `day-toggle-btn${serviceDay==='weekend' ? ' active' : ''}`;
   }

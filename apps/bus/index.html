@@ -106,26 +106,6 @@ header {
   text-align: right;
 }
 
-.day-badge {
-  display: inline-block;
-  margin-top: 3px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-.day-badge.weekday {
-  background: rgba(200, 93, 43, 0.9);
-  color: #fff;
-}
-
-.day-badge.weekend {
-  background: var(--gold);
-  color: var(--rail);
-}
-
 .control-group {
   margin-top: 0;
   padding: 0 14px 8px;
@@ -143,16 +123,16 @@ header {
 .toggle-btn {
   flex: 1;
   min-height: 0;
-  padding: 6px 4px;
+  padding: 5px 0;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.6);
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.25;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
   white-space: normal;
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
@@ -162,6 +142,20 @@ header {
 .toggle-btn.active {
   background: rgba(255, 255, 255, 0.94);
   border-color: rgba(255, 255, 255, 0.94);
+  color: var(--rail);
+}
+
+header .control-group:last-of-type .toggle-btn {
+  padding: 6px 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+header .control-group:last-of-type .toggle-btn.active {
+  background: rgba(255, 255, 255, 0.94);
   color: var(--rail);
 }
 
@@ -458,7 +452,7 @@ main {
 
 @media (max-width: 760px) {
   :root {
-    --header-h: 164px;
+    --header-h: 142px;
   }
 
   .toggle-row {
@@ -468,7 +462,6 @@ main {
   }
 
   .toggle-btn {
-    min-height: 32px;
     font-size: 10px;
   }
 
@@ -498,7 +491,6 @@ main {
     <div class="clock">
       <div id="live-clock">--:--</div>
       <div id="live-date">----.--.--</div>
-      <div id="day-badge" class="day-badge weekday">平日ダイヤ</div>
     </div>
   </div>
 
@@ -582,9 +574,6 @@ main {
   }
 
   function updateControls() {
-    const badge = document.getElementById('day-badge');
-    badge.textContent = serviceDay === 'weekend' ? '休日ダイヤ' : '平日ダイヤ';
-    badge.className = `day-badge ${serviceDay === 'weekend' ? 'weekend' : 'weekday'}`;
     document.getElementById('day-weekday').className = `toggle-btn${serviceDay === 'weekday' ? ' active' : ''}`;
     document.getElementById('day-weekend').className = `toggle-btn${serviceDay === 'weekend' ? ' active' : ''}`;
     document.getElementById('dir-down').className = `toggle-btn${dir === 'down' ? ' active' : ''}`;
