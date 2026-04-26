@@ -265,7 +265,7 @@ main {
 
 .trip-row.next {
   background: var(--next-bg);
-  border-left: 3px solid var(--brand);
+  box-shadow: inset 3px 0 0 var(--brand);
 }
 
 .trip-row.past {
@@ -273,7 +273,7 @@ main {
 }
 
 .trip-row.next .trip-main {
-  padding-left: 11px;
+  padding-left: 14px;
 }
 
 .trip-main {
@@ -331,6 +331,7 @@ main {
   align-items: center;
   justify-content: center;
   gap: 2px;
+  position: relative;
 }
 
 .time-label {
@@ -372,6 +373,34 @@ main {
 
 .time-label.mid {
   background: #7b3f9a;
+}
+
+.duration-badge {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  padding: 1px 4px;
+  border: 1px solid #e2dccf;
+  border-radius: 3px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.trip-row.next .duration-badge {
+  background: var(--next-bg);
+}
+
+.duration-unit {
+  margin-left: 1px;
+  font-size: 6px;
+  letter-spacing: 0;
 }
 
 .empty,
@@ -471,7 +500,7 @@ main {
   }
 
   .trip-row.next .trip-main {
-    padding-left: 7px;
+    padding-left: 10px;
   }
 
   .trip-destination {
@@ -554,6 +583,12 @@ main {
   function toMinutes(value) {
     const [hh, mm] = value.split(':').map(Number);
     return hh * 60 + mm;
+  }
+
+  function durationText(start, end) {
+    if (!start || !end) return '';
+    const diff = Math.abs(toMinutes(end) - toMinutes(start));
+    return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
   }
 
   function getTrips() {
@@ -641,10 +676,12 @@ main {
               <div class="time-value">${firstStopTime}</div>
             </div>
             <div class="time-cell midpoint">
+              ${durationText(firstStopTime, secondStopTime) ? `<span class="duration-badge">${durationText(firstStopTime, secondStopTime)}</span>` : ''}
               <div class="time-label mid">${secondStopLabel}</div>
               <div class="time-value">${secondStopTime}</div>
             </div>
             <div class="time-cell arrival">
+              ${durationText(secondStopTime, thirdStopTime) ? `<span class="duration-badge">${durationText(secondStopTime, thirdStopTime)}</span>` : ''}
               <div class="time-label arr">${thirdStopLabel}</div>
               <div class="time-value">${thirdStopTime}</div>
             </div>
@@ -664,11 +701,13 @@ main {
     serviceDay = nextDay;
     localStorage.setItem('bus-service-day', serviceDay);
     render();
+    scrollToNextTrip();
   };
 
   window.setDir = function setDir(nextDir) {
     dir = nextDir;
     render();
+    scrollToNextTrip();
   };
 
   window.scrollToNext = function scrollToNext() {

@@ -126,7 +126,7 @@ header {
 .train-row.past { opacity:.35; }
 .train-row.next {
   background:var(--next-bg);
-  border-left:3px solid var(--accent);
+  box-shadow:inset 3px 0 0 var(--accent);
 }
 
 /* Left: badge info */
@@ -134,7 +134,7 @@ header {
   padding:8px 4px 8px 14px;
   display:flex; flex-direction:column; justify-content:center; gap:3px;
 }
-.train-row.next .cell-info { padding-left:11px; }
+.train-row.next .cell-info { padding-left:14px; }
 .train-badge {
   display:inline-flex; align-items:center; gap:3px;
   font-size:10px; font-weight:700; padding:2px 6px;
@@ -160,12 +160,36 @@ header {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   border-left:1px solid #ede9e0;
   gap:2px;
+  position:relative;
 }
 .time-big { font-family:var(--mono); font-size:18px; line-height:1; }
 .time-big .hh { font-size:18px; color:inherit; }
 .cell-time.tokyo    .time-big { color:var(--col-tokyo); }
 .cell-time.ueno     .time-big { color:var(--col-ueno); }
 .cell-time.koriyama .time-big { color:var(--col-koriyama); }
+.duration-badge {
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translate(-50%, -50%);
+  z-index:2;
+  padding:1px 4px;
+  border:1px solid #e2dccf;
+  border-radius:3px;
+  background:var(--card);
+  color:var(--muted);
+  font-family:var(--mono);
+  font-size:8px;
+  line-height:1.2;
+  white-space:nowrap;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.train-row.next .duration-badge { background:var(--next-bg); }
+.duration-unit {
+  font-size:6px;
+  margin-left:1px;
+  letter-spacing:0;
+}
 
 /* FAB */
 .fab {
@@ -260,6 +284,10 @@ header {
   // ── Helpers ────────────────────────────────────────────
   function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
   function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+  function durationText(start, end) {
+    const diff = Math.abs(toMins(end) - toMins(start));
+    return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
+  }
   function loadInitialServiceDay() {
     const saved = localStorage.getItem('shinkansen-service-day');
     if (saved === 'weekday' || saved === 'weekend') return saved;
@@ -345,9 +373,11 @@ header {
             <div class="time-big"><span class="hh">${hh0}:</span>${mm0}</div>
           </div>
           <div class="cell-time ueno">
+            <span class="duration-badge">${durationText(t0, t1)}</span>
             <div class="time-big"><span class="hh">${hh1}:</span>${mm1}</div>
           </div>
           <div class="cell-time ${c2}">
+            <span class="duration-badge">${durationText(t1, t2)}</span>
             <div class="time-big"><span class="hh">${hh2}:</span>${mm2}</div>
           </div>
         </div>`;
