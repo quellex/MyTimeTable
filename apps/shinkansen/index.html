@@ -167,18 +167,9 @@ header {
 }
 .time-big { font-family:var(--mono); font-size:18px; line-height:1; }
 .time-big .hh { font-size:18px; color:inherit; }
-.time-tag {
-  font-size:8px; font-weight:700; letter-spacing:.1em;
-  padding:1px 5px; border-radius:2px; color:#fff;
-}
 .cell-time.tokyo    .time-big { color:var(--col-tokyo); }
 .cell-time.ueno     .time-big { color:var(--col-ueno); }
 .cell-time.koriyama .time-big { color:var(--col-koriyama); }
-.tag-dep-tokyo    { background:var(--col-tokyo); }
-.tag-dep-ueno     { background:var(--col-ueno); }
-.tag-dep-koriyama { background:var(--col-koriyama); }
-.tag-arr-tokyo    { background:#0d3d6b; }
-.tag-arr-koriyama { background:#4e2070; }
 
 /* FAB */
 .fab {
@@ -204,7 +195,7 @@ header {
     <div class="train-icon">🚄</div>
     <div class="header-title">
       <h1>東北新幹線</h1>
-      <div class="sub">Tohoku Shinkansen · 郡山停車列車</div>
+      <div class="sub">東京-上野-郡山</div>
     </div>
     <div class="clock-block">
       <div id="live-clock">--:--</div>
@@ -337,10 +328,6 @@ header {
         const c0 = dir==='down' ? 'tokyo'    : 'koriyama';
         const c2 = dir==='down' ? 'koriyama' : 'tokyo';
 
-        const tag0 = `tag-dep-${c0}`;
-        const tag1 = `tag-dep-ueno`;
-        const tag2 = dir==='down' ? 'tag-arr-koriyama' : 'tag-arr-tokyo';
-
         html += `<div class="${cls}">
           <div class="cell-info">
             <span class="train-badge badge-${t.type}">${t.name}</span>
@@ -352,15 +339,12 @@ header {
           </div>
           <div class="cell-time ${c0}">
             <div class="time-big"><span class="hh">${hh0}:</span>${mm0}</div>
-            <div class="time-tag ${tag0}">発</div>
           </div>
           <div class="cell-time ueno">
             <div class="time-big"><span class="hh">${hh1}:</span>${mm1}</div>
-            <div class="time-tag ${tag1}">発</div>
           </div>
           <div class="cell-time ${c2}">
             <div class="time-big"><span class="hh">${hh2}:</span>${mm2}</div>
-            <div class="time-tag ${tag2}">着</div>
           </div>
         </div>`;
       });

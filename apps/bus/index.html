@@ -4,70 +4,101 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>郡山駅 バス時刻表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
+/* Shared timetable visual direction, matched with the Shinkansen app. */
 :root {
-  --ink: #16202b;
-  --paper: #f4efe6;
-  --panel: #fffdfa;
-  --line: #ddd4c2;
-  --brand: #bf5a2d;
-  --brand-deep: #803716;
+  --ink: #0d0d0d;
+  --paper: #f0ede6;
+  --rail: #1a2e4a;
+  --rail-mid: #243d61;
+  --brand: #c85d2b;
+  --brand-deep: #8e3d1d;
   --accent: #2f7b83;
-  --accent-soft: #d9eeef;
-  --muted: #786d60;
-  --header-h: 168px;
-  --next-bg: #fff4ea;
+  --gold: #b8a060;
+  --muted: #8a8070;
+  --border: #d8d3c8;
+  --panel: #ffffff;
+  --next-bg: #fff8e8;
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --header-h: 142px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-family: var(--sans);
   min-height: 100dvh;
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(191, 90, 45, 0.18), transparent 26%),
-    linear-gradient(180deg, #efe2cf 0%, var(--paper) 42%, #fbf8f2 100%);
+  background: var(--paper);
 }
 
 header {
   position: sticky;
   top: 0;
-  z-index: 30;
-  padding: 14px 14px 10px;
-  background: rgba(22, 32, 43, 0.96);
+  z-index: 100;
+  padding: 0;
+  background: var(--rail);
   color: #fff;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.25);
+  backdrop-filter: none;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
   height: var(--header-h);
 }
 
 .header-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  padding: 10px 14px 8px;
+  gap: 10px;
 }
 
 .bus-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
-  font-size: 18px;
+  background: var(--brand);
+  font-size: 17px;
   flex-shrink: 0;
 }
 
 .header-title h1 {
-  font-size: 16px;
-  letter-spacing: 0.04em;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .header-title p {
-  margin-top: 2px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.72);
+  margin-top: 0;
+  font-size: 9px;
+  opacity: 0.6;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+#live-clock {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+#live-date {
+  margin-top: 1px;
+  font-size: 9px;
+  opacity: 0.6;
+  letter-spacing: 0.06em;
+  color: #fff;
 }
 
 .clock {
@@ -75,71 +106,81 @@ header {
   text-align: right;
 }
 
-#live-clock {
-  font-size: 22px;
+.day-badge {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.1em;
 }
 
-#live-date {
-  margin-top: 3px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+.day-badge.weekday {
+  background: rgba(200, 93, 43, 0.9);
+  color: #fff;
+}
+
+.day-badge.weekend {
+  background: var(--gold);
+  color: var(--rail);
 }
 
 .control-group {
-  margin-top: 12px;
+  margin-top: 0;
+  padding: 0 14px 8px;
 }
 
 .control-title {
-  margin-bottom: 6px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.56);
+  display: none;
 }
 
 .toggle-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .toggle-btn {
   flex: 1;
-  min-height: 38px;
-  padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.66);
-  font-size: 12px;
+  min-height: 0;
+  padding: 6px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--sans);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.06em;
   line-height: 1.25;
   white-space: normal;
   cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  user-select: none;
 }
 
 .toggle-btn.active {
-  background: #fff;
-  color: var(--ink);
-  border-color: #fff;
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.94);
+  color: var(--rail);
 }
 
 main {
-  width: min(980px, calc(100% - 24px));
-  margin: 0 auto;
+  width: auto;
+  margin: 0;
   padding: 0 0 80px;
 }
 
 .col-header {
-  width: min(980px, calc(100% - 24px));
-  margin: 0 auto;
+  width: auto;
+  margin: 0;
   display: grid;
-  grid-template-columns: 114px 1fr 1fr 1fr;
-  background: rgba(41, 57, 77, 0.98);
+  grid-template-columns: 100px 1fr 1fr 1fr;
+  background: var(--rail-mid);
   border-bottom: 2px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: var(--header-h);
-  z-index: 25;
+  z-index: 90;
 }
 
 .col-label {
@@ -157,18 +198,18 @@ main {
 }
 
 .col-label.info {
-  color: #ffd2ba;
-  border-bottom: 2px solid #ffd2ba;
+  color: #f2b694;
+  border-bottom: 2px solid #f2b694;
 }
 
 .col-label.dep {
-  color: #a7dbe0;
-  border-bottom: 2px solid #7fb9c1;
+  color: #86cbd0;
+  border-bottom: 2px solid #86cbd0;
 }
 
 .col-label.arr {
-  color: #ffb485;
-  border-bottom: 2px solid #ff9a5b;
+  color: #e89263;
+  border-bottom: 2px solid #e89263;
 }
 
 .col-label.mid {
@@ -190,35 +231,42 @@ main {
 .hour-sep {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 8px 14px 4px;
   position: sticky;
   top: calc(var(--header-h) + 33px);
   background: var(--paper);
-  z-index: 20;
+  z-index: 80;
 }
 
 .hour-sep-num {
-  min-width: 42px;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--brand-deep);
+  min-width: 28px;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--rail);
 }
 
 .hour-sep-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(128, 55, 22, 0.35), rgba(128, 55, 22, 0.04));
+  background: var(--border);
 }
 
 .trip-row {
   display: grid;
-  grid-template-columns: 114px 1fr 1fr 1fr;
+  grid-template-columns: 100px 1fr 1fr 1fr;
   gap: 0;
   align-items: stretch;
   background: var(--panel);
-  border-bottom: 1px solid #e7dfd1;
-  min-height: 58px;
+  border-bottom: 1px solid #e8e4db;
+  min-height: 54px;
+  transition: background 0.15s;
+}
+
+.trip-row:active {
+  background: #f5f0e8;
 }
 
 .trip-row.next {
@@ -227,7 +275,11 @@ main {
 }
 
 .trip-row.past {
-  opacity: 0.46;
+  opacity: 0.35;
+}
+
+.trip-row.next .trip-main {
+  padding-left: 11px;
 }
 
 .trip-main {
@@ -244,33 +296,33 @@ main {
   width: fit-content;
   padding: 2px 6px;
   border-radius: 3px;
-  background: rgba(47, 123, 131, 0.12);
-  color: var(--accent);
+  background: var(--accent);
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
 .trip-destination {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .trip-meta {
-  font-size: 10px;
-  color: var(--muted);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
+  font-size: 10px;
+  color: var(--muted);
 }
 
 .next-chip {
   display: inline-block;
   padding: 1px 4px;
   border-radius: 3px;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+  background: var(--brand);
   color: #fff;
   font-size: 8px;
   font-weight: 700;
@@ -279,7 +331,7 @@ main {
 
 .time-cell {
   padding: 6px 4px;
-  border-left: 1px solid #ece4d7;
+  border-left: 1px solid #ede9e0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -288,17 +340,18 @@ main {
 }
 
 .time-label {
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: #fff;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #fff;
-  padding: 1px 5px;
-  border-radius: 2px;
 }
 
 .time-value {
-  font-size: 20px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 400;
   color: var(--ink);
   line-height: 1;
 }
@@ -308,11 +361,11 @@ main {
 }
 
 .time-cell.arrival .time-value {
-  color: var(--brand-deep);
+  color: var(--brand);
 }
 
 .time-cell.midpoint .time-value {
-  color: #6c4da6;
+  color: #7b3f9a;
 }
 
 .time-label.dep {
@@ -324,85 +377,82 @@ main {
 }
 
 .time-label.mid {
-  background: #7b5ab2;
+  background: #7b3f9a;
 }
 
 .empty,
 .error-box {
-  margin-top: 16px;
-  padding: 18px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(191, 90, 45, 0.18);
+  margin: 16px 14px 0;
+  padding: 14px;
+  border-radius: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--brand);
+  font-weight: 700;
   line-height: 1.7;
 }
 
 .fab {
   position: fixed;
-  right: 18px;
-  bottom: 20px;
-  z-index: 40;
-  width: 54px;
-  height: 54px;
+  right: 20px;
+  bottom: 24px;
+  z-index: 200;
+  width: 50px;
+  height: 50px;
   border: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+  background: var(--rail);
   color: #fff;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(128, 55, 22, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+
+.fab:active {
+  transform: scale(0.9);
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bus-list {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .fab {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 760px) {
-  :root { --header-h: 258px; }
-  header {
-    padding-bottom: 12px;
+  :root {
+    --header-h: 164px;
   }
+
   .toggle-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    grid-template-columns: none;
+    gap: 6px;
   }
+
   .toggle-btn {
-    min-height: 44px;
-    font-size: 11px;
+    min-height: 32px;
+    font-size: 10px;
   }
+
   .col-header,
   .trip-row {
     grid-template-columns: 90px 1fr 1fr 1fr;
   }
-  .col-header {
-    top: var(--header-h);
+
+  .trip-row.next .trip-main {
+    padding-left: 7px;
   }
-  .col-label:first-child {
-    text-align: left;
-    padding-left: 10px;
-  }
-  .col-label {
-    font-size: 9px;
-    padding: 7px 2px;
-  }
-  .trip-main {
-    padding: 8px 4px 8px 10px;
-  }
+
   .trip-destination {
-    font-size: 11px;
-  }
-  .trip-meta {
-    font-size: 9px;
-  }
-  .route-no {
-    font-size: 8px;
-  }
-  .time-cell {
-    border-left: 1px solid #ece4d7;
-    border-top: none;
-    flex-direction: column;
-    justify-content: center;
-    padding: 8px 4px;
-  }
-  .time-value {
-    font-size: 17px;
+    font-size: 10px;
   }
 }
 </style>
@@ -412,37 +462,38 @@ main {
   <div class="header-top">
     <div class="bus-icon">🚌</div>
     <div class="header-title">
-      <h1>郡山駅 バス時刻表</h1>
-      <p>台新方面と針生方面を同じ画面で一覧表示</p>
+      <h1>福島交通バス</h1>
+      <p>郡山駅前 - 台新 - 静御前堂 / 郡山駅前 - 針生</p>
     </div>
     <div class="clock">
       <div id="live-clock">--:--</div>
       <div id="live-date">----.--.--</div>
+      <div id="day-badge" class="day-badge weekday">平日ダイヤ</div>
     </div>
   </div>
 
   <div class="control-group">
     <div class="control-title">ダイヤ</div>
     <div class="toggle-row">
-      <button class="toggle-btn active" id="day-weekday" onclick="setServiceDay('weekday')">平日</button>
-      <button class="toggle-btn" id="day-weekend" onclick="setServiceDay('weekend')">休日</button>
+      <button class="toggle-btn active" id="day-weekday" onclick="setServiceDay('weekday')">平日ダイヤ</button>
+      <button class="toggle-btn" id="day-weekend" onclick="setServiceDay('weekend')">休日ダイヤ</button>
     </div>
   </div>
 
   <div class="control-group">
     <div class="control-title">方向</div>
     <div class="toggle-row">
-      <button class="toggle-btn active" id="dir-down" onclick="setDir('down')">郡山駅前 → バス停</button>
-      <button class="toggle-btn" id="dir-up" onclick="setDir('up')">バス停 → 郡山駅前</button>
+      <button class="toggle-btn active" id="dir-down" onclick="setDir('down')">▼ 下り（郡山駅前→バス停）</button>
+      <button class="toggle-btn" id="dir-up" onclick="setDir('up')">▲ 上り（バス停→郡山駅前）</button>
     </div>
   </div>
 </header>
 
 <div class="col-header">
   <div class="col-label info">便<span class="en">DESTINATION</span></div>
-  <div class="col-label dep" id="lbl-col-1">出発<span class="en">STOP 1</span></div>
-  <div class="col-label mid" id="lbl-col-2">経由<span class="en">STOP 2</span></div>
-  <div class="col-label arr" id="lbl-col-3">到着<span class="en">STOP 3</span></div>
+  <div class="col-label dep" id="lbl-col-1">出発<span class="en">発</span></div>
+  <div class="col-label mid" id="lbl-col-2">経由<span class="en">着</span></div>
+  <div class="col-label arr" id="lbl-col-3">到着<span class="en">着</span></div>
 </div>
 
 <main>
@@ -469,9 +520,10 @@ main {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
     const mo = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    document.getElementById('live-clock').textContent = `${hh}:${mm}`;
+    document.getElementById('live-clock').textContent = `${hh}:${mm}:${ss}`;
     document.getElementById('live-date').textContent = `${now.getFullYear()}.${mo}.${dd}（${DAY_NAMES[now.getDay()]}）`;
   }
 
@@ -498,6 +550,9 @@ main {
   }
 
   function updateControls() {
+    const badge = document.getElementById('day-badge');
+    badge.textContent = serviceDay === 'weekend' ? '休日ダイヤ' : '平日ダイヤ';
+    badge.className = `day-badge ${serviceDay === 'weekend' ? 'weekend' : 'weekday'}`;
     document.getElementById('day-weekday').className = `toggle-btn${serviceDay === 'weekday' ? ' active' : ''}`;
     document.getElementById('day-weekend').className = `toggle-btn${serviceDay === 'weekend' ? ' active' : ''}`;
     document.getElementById('dir-down').className = `toggle-btn${dir === 'down' ? ' active' : ''}`;
@@ -520,12 +575,13 @@ main {
       }
     });
 
+    const columnTags = dir === 'down' ? ['発', '着', '着'] : ['発', '発', '着'];
     document.getElementById('lbl-col-1').innerHTML =
-      `${dir === 'down' ? '郡山駅前' : '静御前堂'}<span class="en">STOP 1</span>`;
+      `${dir === 'down' ? '郡山駅前' : '静御前堂'}<span class="en">${columnTags[0]}</span>`;
     document.getElementById('lbl-col-2').innerHTML =
-      `${dir === 'down' ? '台新 / 針生' : '台新 / 針生'}<span class="en">STOP 2</span>`;
+      `${dir === 'down' ? '台新 / 針生' : '台新 / 針生'}<span class="en">${columnTags[1]}</span>`;
     document.getElementById('lbl-col-3').innerHTML =
-      `${dir === 'down' ? '静御前堂' : '郡山駅前'}<span class="en">STOP 3</span>`;
+      `${dir === 'down' ? '静御前堂' : '郡山駅前'}<span class="en">${columnTags[2]}</span>`;
 
     const list = document.getElementById('trip-list');
     if (!trips.length) {
@@ -546,11 +602,11 @@ main {
       groups[hour].forEach(({ trip, index }) => {
         const isPast = toMinutes(trip.departure) < nowMinutes;
         const isNext = index === nextIndex;
-        const firstStopLabel = dir === 'down' ? trip.fromStop : '静御前堂';
+        const firstStopLabel = dir === 'down' ? trip.fromStop : (trip.midpointStop || '');
         const firstStopTime = dir === 'down' ? trip.departure : (trip.midpoint_time || '');
-        const secondStopLabel = trip.fromStop;
+        const secondStopLabel = dir === 'down' ? trip.toStop : trip.fromStop;
         const secondStopTime = dir === 'down' ? trip.arrival : trip.departure;
-        const thirdStopLabel = dir === 'down' ? '静御前堂' : trip.toStop;
+        const thirdStopLabel = dir === 'down' ? (trip.midpointStop || '') : trip.toStop;
         const thirdStopTime = dir === 'down' ? (trip.midpoint_time || '') : trip.arrival;
         html += `
           <section class="trip-row${isPast ? ' past' : ''}${isNext ? ' next' : ''}">
