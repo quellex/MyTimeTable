@@ -370,10 +370,14 @@ main {
   background: #7b3f9a;
 }
 
+.time-label.placeholder {
+  visibility: hidden;
+}
+
 .duration-badge {
   position: absolute;
   left: 0;
-  top: calc(50% + 7px);
+  top: calc(50% + 6px);
   transform: translate(calc(-50% + 4px), -50%);
   z-index: 2;
   padding: 1px 4px;
@@ -586,6 +590,13 @@ main {
     return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
   }
 
+  function timeLabelHtml(kind, label) {
+    if (!label || label === '郡山駅前' || label === '静御前堂') {
+      return `<div class="time-label ${kind} placeholder" aria-hidden="true">&nbsp;</div>`;
+    }
+    return `<div class="time-label ${kind}">${label}</div>`;
+  }
+
   function listTop() {
     const header = document.querySelector('.col-header');
     return header ? header.getBoundingClientRect().bottom : 0;
@@ -693,17 +704,17 @@ main {
               <div class="trip-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>のりば ${trip.platform}</span></div>
             </div>
             <div class="time-cell departure">
-              <div class="time-label dep">${firstStopLabel}</div>
+              ${timeLabelHtml('dep', firstStopLabel)}
               <div class="time-value">${firstStopTime}</div>
             </div>
             <div class="time-cell midpoint">
               ${durationText(firstStopTime, secondStopTime) ? `<span class="duration-badge">${durationText(firstStopTime, secondStopTime)}</span>` : ''}
-              <div class="time-label mid">${secondStopLabel}</div>
+              ${timeLabelHtml('mid', secondStopLabel)}
               <div class="time-value">${secondStopTime}</div>
             </div>
             <div class="time-cell arrival">
               ${durationText(secondStopTime, thirdStopTime) ? `<span class="duration-badge">${durationText(secondStopTime, thirdStopTime)}</span>` : ''}
-              <div class="time-label arr">${thirdStopLabel}</div>
+              ${timeLabelHtml('arr', thirdStopLabel)}
               <div class="time-value">${thirdStopTime}</div>
             </div>
           </section>
