@@ -284,6 +284,7 @@ header {
   // ── Helpers ────────────────────────────────────────────
   function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
   function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+  function currentServiceDay() { return isWeekend(new Date()) ? 'weekend' : 'weekday'; }
   function durationText(start, end) {
     const diff = Math.abs(toMins(end) - toMins(start));
     return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
@@ -312,9 +313,7 @@ header {
     });
   }
   function loadInitialServiceDay() {
-    const saved = localStorage.getItem('shinkansen-service-day');
-    if (saved === 'weekday' || saved === 'weekend') return saved;
-    return isWeekend(new Date()) ? 'weekend' : 'weekday';
+    return currentServiceDay();
   }
   function isWeekendMode() { return serviceDay === 'weekend'; }
   function updateServiceDayUI() {
@@ -409,7 +408,7 @@ header {
 
     list.innerHTML = html;
     if (options.scrollToStartMinutes !== undefined) setTimeout(() => scrollToStartMinutes(options.scrollToStartMinutes), 0);
-    if (options.scrollToNow) setTimeout(scrollToNow, 0);
+    if (options.scrollToNow) setTimeout(scrollToNextTrain, 0);
   }
 
   window.setDir = function setDir(d) {
@@ -425,9 +424,21 @@ header {
     render({ scrollToStartMinutes: visibleStartMinutes });
   };
   window.scrollToNow = function scrollToNow() {
+    const todayServiceDay = currentServiceDay();
+    if (serviceDay !== todayServiceDay) {
+      serviceDay = todayServiceDay;
+      localStorage.setItem('shinkansen-service-day', serviceDay);
+      updateServiceDayUI();
+      render();
+      setTimeout(scrollToNextTrain, 0);
+      return;
+    }
+    scrollToNextTrain();
+  };
+  function scrollToNextTrain() {
     const el = document.querySelector('.train-row.next');
     if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
-  };
+  }
 
   setInterval(render, 60000);
   render({ scrollToNow: true });
