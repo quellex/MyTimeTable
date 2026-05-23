@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>新幹線・バス まとめ時刻表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d0d0d;
+  --paper: #f0ede6;
+  --rail: #1a2e4a;
+  --rail-mid: #243d61;
+  --train: #c8312b;
+  --bus: #2f7b83;
+  --koriyama: #7b3f9a;
+  --ueno: #2e7d52;
+  --muted: #8a8070;
+  --border: #d8d3c8;
+  --panel: #ffffff;
+  --next-bg: #fff8e8;
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --header-h: 142px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-h);
+  background: var(--rail);
+  color: #fff;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 8px;
+}
+
+.combo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--train) 0 50%, var(--bus) 50% 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.header-title h1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.header-title p {
+  margin-top: 0;
+  color: #fff;
+  font-size: 9px;
+  opacity: 0.6;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.version-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.clock {
+  margin-left: auto;
+  text-align: right;
+}
+
+#live-clock {
+  font-family: var(--mono);
+  font-size: 19px;
+  line-height: 1;
+}
+
+#live-date {
+  margin-top: 1px;
+  font-size: 9px;
+  opacity: 0.6;
+  letter-spacing: 0.06em;
+}
+
+.control-group {
+  padding: 0 14px 8px;
+}
+
+.toggle-row {
+  display: flex;
+  gap: 6px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.control-group:last-of-type .toggle-btn {
+  padding: 6px 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.toggle-btn.active,
+.control-group:last-of-type .toggle-btn.active {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.94);
+  color: var(--rail);
+}
+
+.transfer-header {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 90;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--rail-mid);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.pane-label {
+  padding: 7px 10px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.pane-label.left {
+  color: #86cbd0;
+  border-bottom: 2px solid #86cbd0;
+}
+
+.pane-label.right {
+  color: #e89263;
+  border-bottom: 2px solid #e89263;
+}
+
+.pane-label .en {
+  display: block;
+  font-size: 8px;
+  opacity: 0.55;
+  letter-spacing: 0.12em;
+}
+
+.transfer-board {
+  background: #e5dfd5;
+  padding-bottom: 80px;
+}
+
+.transfer-slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1px;
+  background: #e5dfd5;
+  border-bottom: 1px solid #e8e4db;
+}
+
+.slot-cell {
+  min-width: 0;
+  background: var(--paper);
+}
+
+.slot-cell.blank {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.leg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 98px;
+  background: var(--panel);
+  border-bottom: 1px solid #e8e4db;
+  overflow: hidden;
+}
+
+.slot-cell .leg-row:last-child {
+  border-bottom: none;
+}
+
+.leg-row:active {
+  background: #f5f0e8;
+}
+
+.leg-row.past {
+  opacity: 0.35;
+}
+
+.leg-row.next {
+  background: var(--next-bg);
+  box-shadow: inset 3px 0 0 var(--rail);
+}
+
+.leg-row.train.next {
+  box-shadow: inset 3px 0 0 var(--train);
+}
+
+.leg-row.bus.next {
+  box-shadow: inset 3px 0 0 var(--bus);
+}
+
+.item-main {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 6px 7px 2px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.train .mode-badge {
+  background: var(--train);
+}
+
+.bus .mode-badge {
+  background: var(--bus);
+}
+
+.item-title {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.18;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.18;
+}
+
+.item-meta span:last-child {
+  min-width: 0;
+}
+
+.next-chip {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--rail);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.time-cell {
+  position: relative;
+  min-height: 36px;
+  padding: 3px;
+  border-left: 1px solid #ede9e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.time-cell.departure {
+  border-left: none;
+}
+
+.time-label {
+  padding: 1px 4px;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.time-label.dep {
+  background: var(--bus);
+}
+
+.time-label.arr {
+  background: var(--train);
+}
+
+.train .time-label.dep {
+  background: var(--ueno);
+}
+
+.train .time-label.arr {
+  background: var(--koriyama);
+}
+
+.time-value {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.train .time-cell.departure .time-value {
+  color: var(--ueno);
+}
+
+.train .time-cell.arrival .time-value {
+  color: var(--koriyama);
+}
+
+.bus .time-cell.departure .time-value {
+  color: var(--bus);
+}
+
+.bus .time-cell.arrival .time-value {
+  color: var(--train);
+}
+
+.duration-badge {
+  position: absolute;
+  left: 0;
+  top: calc(50% + 4px);
+  transform: translate(calc(-50% + 4px), -50%);
+  z-index: 2;
+  padding: 1px 3px;
+  border: 1px solid #e2dccf;
+  border-radius: 3px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.leg-row.next .duration-badge {
+  background: var(--next-bg);
+}
+
+.duration-unit {
+  margin-left: 1px;
+  font-size: 5px;
+}
+
+.empty,
+.error-box {
+  margin: 16px 14px 0;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--train);
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: 200;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: var(--rail);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-switch {
+  position: fixed;
+  left: 20px;
+  bottom: 24px;
+  z-index: 200;
+  min-width: 112px;
+  height: 50px;
+  padding: 0 14px;
+  border-radius: 25px;
+  background: var(--rail);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.app-switch.secondary {
+  left: 142px;
+  min-width: 96px;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .transfer-board {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .fab,
+  .app-switch {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 760px) {
+  .transfer-board {
+    gap: 1px;
+  }
+
+  .item-main {
+    padding-left: 6px;
+  }
+
+  .item-title {
+    font-size: 9px;
+  }
+
+  .item-meta {
+    font-size: 8px;
+  }
+
+  .time-value {
+    font-size: 14px;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="combo-icon">⇄</div>
+    <div class="header-title">
+      <h1>新幹線・バス <span class="version-label">v3.0</span></h1>
+      <p>上野-郡山 / 郡山駅前バス</p>
+    </div>
+    <div class="clock">
+      <div id="live-clock">--:--</div>
+      <div id="live-date">----.--.--</div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="day-weekday" onclick="setServiceDay('weekday')">平日ダイヤ</button>
+      <button class="toggle-btn" id="day-weekend" onclick="setServiceDay('weekend')">休日ダイヤ</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="dir-down" onclick="setDir('down')">▼ 下り（上野/郡山駅前→郡山/バス停）</button>
+      <button class="toggle-btn" id="dir-up" onclick="setDir('up')">▲ 上り（郡山/バス停→上野/郡山駅前）</button>
+    </div>
+  </div>
+</header>
+
+<div class="transfer-header">
+  <div class="pane-label left" id="lbl-left">新幹線<span class="en">上野→郡山</span></div>
+  <div class="pane-label right" id="lbl-right">バス<span class="en">郡山駅前→バス停</span></div>
+</div>
+
+<main>
+  <div class="transfer-board" id="transfer-board"></div>
+</main>
+
+<a class="app-switch" href="../shinkansen/index.html" title="新幹線時刻表へ">🚄 新幹線</a>
+<a class="app-switch secondary" href="../bus/index.html" title="バス時刻表へ">🚌 バス</a>
+<button class="fab" onclick="scrollToNext()" title="次の便へ">⏱</button>
+
+<script>
+(async function init() {
+  const [busData, shinkansenData] = await Promise.all([loadBusData(), loadShinkansenData()]);
+  const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+  let serviceDay = currentServiceDay();
+  let dir = 'down';
+  let hasAutoScrolled = false;
+
+  function updateClock() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    document.getElementById('live-clock').textContent = `${hh}:${mm}:${ss}`;
+    document.getElementById('live-date').textContent = `${now.getFullYear()}.${mo}.${dd}（${DAY_NAMES[now.getDay()]}）`;
+  }
+
+  function toMinutes(value) {
+    const [hh, mm] = value.split(':').map(Number);
+    return hh * 60 + mm;
+  }
+
+  function currentServiceDay() {
+    const today = new Date().getDay();
+    return today === 0 || today === 6 ? 'weekend' : 'weekday';
+  }
+
+  function durationText(start, end) {
+    if (!start || !end) return '';
+    const diff = Math.abs(toMinutes(end) - toMinutes(start));
+    return `${diff > 720 ? 1440 - diff : diff}<span class="duration-unit">min</span>`;
+  }
+
+  function abbreviateBusDestination(destination) {
+    const replacements = [
+      ['免許センター [山根町・柴宮団地経由]', '免許センター(山・柴)'],
+      ['免許センター [市役所・柴宮経由]', '免許センター(市・柴)'],
+      ['郡山駅前 [コスモス循環希望ヶ丘経由]', '郡山駅前(希)'],
+      ['郡山駅前 [コスモス循環文化通り経由]', '郡山駅前(文)'],
+      ['コスモス循環池ノ台先回り', 'コスモス(池)'],
+      ['コスモス循環西ノ内先回り', 'コスモス(西)'],
+      ['コスモス循環希望ヶ丘経由', 'コスモス(希)'],
+      ['コスモス循環文化通り経由', 'コスモス(文)'],
+      ['静団地 [市役所経由]', '静団地(市)'],
+      ['静団地 [池ノ台経由]', '静団地(池)'],
+      ['大槻 [麓山経由]', '大槻(麓)'],
+      ['尚志高校 [麓山経由]', '尚志(麓)'],
+      ['郡山駅前 [山根町経由]', '郡山駅前(山)'],
+      ['郡山駅前 [市役所経由]', '郡山駅前(市)'],
+      ['郡山駅前 [麓山経由]', '郡山駅前(麓)'],
+      ['郡山駅前 [池ノ台経由]', '郡山駅前(池)'],
+    ];
+
+    return replacements.reduce((label, [from, to]) => label.replace(from, to), destination);
+  }
+
+  function listTop() {
+    const header = document.querySelector('.transfer-header');
+    return header ? header.getBoundingClientRect().bottom : 0;
+  }
+
+  function getVisibleStartMinutes() {
+    const rows = [...document.querySelectorAll('.leg-row')];
+    if (!rows.length) return null;
+    const top = listTop();
+    const visible = rows.find((row) => row.getBoundingClientRect().bottom > top + 1);
+    return visible ? Number(visible.dataset.startMinutes) : Number(rows[0].dataset.startMinutes);
+  }
+
+  function scrollToStartMinutes(minutes) {
+    if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return;
+    const rows = [...document.querySelectorAll('.leg-row')];
+    if (!rows.length) return;
+    const row = rows
+      .map((el) => ({ el, distance: Math.abs(Number(el.dataset.startMinutes) - minutes) }))
+      .sort((a, b) => a.distance - b.distance)[0].el;
+    window.scrollTo({
+      top: window.scrollY + row.getBoundingClientRect().top - listTop(),
+      behavior: 'auto'
+    });
+  }
+
+  function getTrainItems() {
+    const trains = dir === 'down'
+      ? (serviceDay === 'weekend' ? shinkansenData.DOWN_WEEKEND : shinkansenData.DOWN_WEEKDAY)
+      : (serviceDay === 'weekend' ? shinkansenData.UP_WEEKEND : shinkansenData.UP_WEEKDAY);
+
+    return trains.map((train) => {
+      const departure = dir === 'down' ? train.times[1] : train.times[0];
+      const arrival = dir === 'down' ? train.times[2] : train.times[1];
+      const tokyoTime = dir === 'down' ? train.times[0] : train.times[2];
+      return {
+        kind: 'train',
+        id: `train-${dir}-${train.id}-${departure}`,
+        departure,
+        arrival,
+        depLabel: dir === 'down' ? '上野' : '郡山',
+        arrLabel: dir === 'down' ? '郡山' : '上野',
+        transferTime: dir === 'down' ? arrival : departure,
+        badge: '新幹線',
+        title: `${train.name}${train.id}号`,
+        meta: `${dir === 'down' ? '上野→郡山' : '郡山→上野'} / 東京 ${tokyoTime}${train.origin === 'koriyama' ? ' / 郡山始発' : ''}`,
+      };
+    });
+  }
+
+  function getBusItems() {
+    return Object.entries(busData.routes).flatMap(([, route]) => {
+      return route[serviceDay][dir].map((trip, index) => ({
+        kind: 'bus',
+        id: `bus-${dir}-${trip.route_no}-${trip.departure}-${index}`,
+        departure: trip.departure,
+        arrival: trip.arrival,
+        depLabel: route.stops[dir][0],
+        arrLabel: route.stops[dir][1],
+        transferTime: dir === 'down' ? trip.departure : trip.arrival,
+        badge: trip.route_no,
+        title: abbreviateBusDestination(trip.destination),
+        meta: `のりば ${trip.platform}${trip.midpoint_time ? ` / ${route.midpointStop} ${trip.midpoint_time}` : ''}`,
+      }));
+    });
+  }
+
+  function updateControls() {
+    document.getElementById('day-weekday').className = `toggle-btn${serviceDay === 'weekday' ? ' active' : ''}`;
+    document.getElementById('day-weekend').className = `toggle-btn${serviceDay === 'weekend' ? ' active' : ''}`;
+    document.getElementById('dir-down').className = `toggle-btn${dir === 'down' ? ' active' : ''}`;
+    document.getElementById('dir-up').className = `toggle-btn${dir === 'up' ? ' active' : ''}`;
+    document.getElementById('lbl-left').innerHTML = dir === 'down'
+      ? '新幹線<span class="en">上野→郡山</span>'
+      : 'バス<span class="en">バス停→郡山駅前</span>';
+    document.getElementById('lbl-right').innerHTML = dir === 'down'
+      ? 'バス<span class="en">郡山駅前→バス停</span>'
+      : '新幹線<span class="en">郡山→上野</span>';
+  }
+
+  function sortByTransferTime(items) {
+    return items.sort((a, b) => {
+      const transferDiff = toMinutes(a.transferTime) - toMinutes(b.transferTime);
+      if (transferDiff !== 0) return transferDiff;
+      const departureDiff = toMinutes(a.departure) - toMinutes(b.departure);
+      if (departureDiff !== 0) return departureDiff;
+      return toMinutes(a.arrival) - toMinutes(b.arrival);
+    });
+  }
+
+  function nextItemId(items, nowMinutes) {
+    let nextId = null;
+    let minDiff = Infinity;
+    items.forEach((item) => {
+      const diff = toMinutes(item.departure) - nowMinutes;
+      if (diff >= 0 && diff < minDiff) {
+        minDiff = diff;
+        nextId = item.id;
+      }
+    });
+    return nextId;
+  }
+
+  function groupByTransferTime(items) {
+    const groups = new Map();
+    items.forEach((item) => {
+      if (!groups.has(item.transferTime)) groups.set(item.transferTime, []);
+      groups.get(item.transferTime).push(item);
+    });
+    return groups;
+  }
+
+  function renderItem(item, nextId, nowMinutes) {
+    const isPast = toMinutes(item.departure) < nowMinutes;
+    const isNext = item.id === nextId;
+    return `
+      <section class="leg-row ${item.kind}${isPast ? ' past' : ''}${isNext ? ' next' : ''}" data-start-minutes="${toMinutes(item.transferTime)}">
+        <div class="item-main">
+          <span class="mode-badge">${item.badge}</span>
+          <div class="item-title">${item.title}</div>
+          <div class="item-meta">${isNext ? '<span class="next-chip">次発</span>' : ''}<span>${item.meta}</span></div>
+        </div>
+        <div class="time-cell departure">
+          <div class="time-label dep">${item.depLabel}</div>
+          <div class="time-value">${item.departure}</div>
+        </div>
+        <div class="time-cell arrival">
+          <span class="duration-badge">${durationText(item.departure, item.arrival)}</span>
+          <div class="time-label arr">${item.arrLabel}</div>
+          <div class="time-value">${item.arrival}</div>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderCell(items, nextId, nowMinutes) {
+    if (!items.length) return '<div class="slot-cell blank" aria-hidden="true"></div>';
+    const html = items.map((item) => renderItem(item, nextId, nowMinutes)).join('');
+    return `<div class="slot-cell">${html}</div>`;
+  }
+
+  function renderTransferBoard(leftItems, rightItems, leftNextId, rightNextId, nowMinutes) {
+    if (!leftItems.length && !rightItems.length) {
+      return '<div class="empty">この条件の便は見つかりませんでした。</div>';
+    }
+
+    const leftGroups = groupByTransferTime(leftItems);
+    const rightGroups = groupByTransferTime(rightItems);
+    const transferTimes = [...new Set([...leftGroups.keys(), ...rightGroups.keys()])]
+      .sort((a, b) => toMinutes(a) - toMinutes(b));
+
+    let html = '';
+    transferTimes.forEach((transferTime) => {
+      html += `<div class="transfer-slot" data-transfer-minutes="${toMinutes(transferTime)}">
+        ${renderCell(leftGroups.get(transferTime) || [], leftNextId, nowMinutes)}
+        ${renderCell(rightGroups.get(transferTime) || [], rightNextId, nowMinutes)}
+      </div>`;
+    });
+    return html;
+  }
+
+  function render(options = {}) {
+    updateControls();
+
+    const trainItems = sortByTransferTime(getTrainItems());
+    const busItems = sortByTransferTime(getBusItems());
+    const leftItems = dir === 'down' ? trainItems : busItems;
+    const rightItems = dir === 'down' ? busItems : trainItems;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    document.getElementById('transfer-board').innerHTML = renderTransferBoard(
+      leftItems,
+      rightItems,
+      nextItemId(leftItems, nowMinutes),
+      nextItemId(rightItems, nowMinutes),
+      nowMinutes
+    );
+    if (!hasAutoScrolled) {
+      hasAutoScrolled = true;
+      setTimeout(scrollToNextItem, 0);
+    }
+    if (options.scrollToStartMinutes !== undefined) setTimeout(() => scrollToStartMinutes(options.scrollToStartMinutes), 0);
+  }
+
+  window.setServiceDay = function setServiceDay(nextDay) {
+    const visibleStartMinutes = getVisibleStartMinutes();
+    serviceDay = nextDay;
+    localStorage.setItem('combined-service-day', serviceDay);
+    render({ scrollToStartMinutes: visibleStartMinutes });
+  };
+
+  window.setDir = function setDir(nextDir) {
+    const visibleStartMinutes = getVisibleStartMinutes();
+    dir = nextDir;
+    localStorage.setItem('combined-dir', dir);
+    render({ scrollToStartMinutes: visibleStartMinutes });
+  };
+
+  window.scrollToNext = function scrollToNext() {
+    const todayServiceDay = currentServiceDay();
+    if (serviceDay !== todayServiceDay) {
+      serviceDay = todayServiceDay;
+      localStorage.setItem('combined-service-day', serviceDay);
+      render();
+      setTimeout(scrollToNextItem, 0);
+      return;
+    }
+    scrollToNextItem();
+  };
+
+  function scrollToNextItem() {
+    const rows = [...document.querySelectorAll('.leg-row.next')];
+    const el = rows
+      .map((row) => ({ row, minutes: Number(row.dataset.startMinutes) }))
+      .sort((a, b) => a.minutes - b.minutes)[0]?.row;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  const savedDay = localStorage.getItem('combined-service-day');
+  const savedDir = localStorage.getItem('combined-dir');
+  if (savedDay === 'weekday' || savedDay === 'weekend') serviceDay = savedDay;
+  if (savedDir === 'down' || savedDir === 'up') dir = savedDir;
+
+  setInterval(updateClock, 1000);
+  setInterval(render, 60000);
+  updateClock();
+  render();
+})().catch(showDataLoadError);
+
+function loadBusData() {
+  if (window.BUS_TIMETABLE_DATA) {
+    return Promise.resolve(window.BUS_TIMETABLE_DATA);
+  }
+
+  const version = '20260423';
+  const candidates = buildScriptCandidates([
+    '../../data/bus/timetable-data.js',
+    '../data/bus/timetable-data.js',
+    './data/bus/timetable-data.js',
+    'data/bus/timetable-data.js'
+  ], version);
+
+  return [...new Set(candidates)].reduce((promise, src) => {
+    return promise.catch(() => loadScript(src, 'BUS_TIMETABLE_DATA'));
+  }, Promise.reject(new Error('Initial bus load attempt')));
+}
+
+function loadShinkansenData() {
+  if (window.SHINKANSEN_TIMETABLE_DATA) {
+    return Promise.resolve(window.SHINKANSEN_TIMETABLE_DATA);
+  }
+
+  const version = '20260314';
+  const candidates = buildScriptCandidates([
+    '../../data/shinkansen/timetable-data.js',
+    '../data/shinkansen/timetable-data.js',
+    './data/shinkansen/timetable-data.js',
+    'data/shinkansen/timetable-data.js'
+  ], version);
+
+  return [...new Set(candidates)].reduce((promise, src) => {
+    return promise.catch(() => loadScript(src, 'SHINKANSEN_TIMETABLE_DATA'));
+  }, Promise.reject(new Error('Initial shinkansen load attempt')));
+}
+
+function buildScriptCandidates(paths, version) {
+  const versioned = paths.map((path) => `${path}?v=${version}`);
+  const plain = paths.slice();
+  return window.location.protocol === 'file:'
+    ? [...plain, ...versioned]
+    : [...versioned, ...plain];
+}
+
+function loadScript(src, globalName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      if (window[globalName]) resolve(window[globalName]);
+      else reject(new Error(`Loaded ${src} but ${globalName} was undefined`));
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function showDataLoadError(error) {
+  const board = document.getElementById('transfer-board');
+  if (board) board.innerHTML = '<div class="error-box">Data load error: timetable data was not loaded.</div>';
+  console.error(error);
+}
+</script>
+</body>
+</html>
